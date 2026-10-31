@@ -1,0 +1,1102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>OctoSnap Magnet Booth</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&family=Poppins:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap"
+    />
+    <link rel="stylesheet" href="hark.css" />
+    <link rel="stylesheet" href="hark-hero.css" />
+    <style>
+      :root { --x-or: #F47B20; --x-ch: #1F1F24; --x-ch2: #2B2B32; --x-ln: #3A3A43; --x-pop: "Poppins", system-ui, sans-serif; --x-pf: "Playfair Display", Georgia, serif; }
+      html, body { margin: 0; height: 100%; background: var(--x-ch); color: #fff; }
+      body { font-family: var(--x-pop); font-size: 16px; }
+      .x-app { min-height: 100dvh; }
+      .x-screen { display: none; min-height: 100dvh; }
+      .x-screen.is-on { display: block; }
+      .x-wrap { max-width: 980px; margin: 0 auto; padding: 24px 20px 48px; }
+      .x-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+      .x-brand { font-family: var(--x-pf); font-size: clamp(28px, 5vw, 44px); line-height: 1.1; margin: 0; font-weight: 600; }
+      .x-brand em { color: var(--x-or); font-style: italic; }
+      .x-sub { color: #B9B9C2; margin: 6px 0 0; font-size: 15px; }
+      .x-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+      .x-card { background: var(--x-ch2); border: 1px solid var(--x-ln); border-radius: 20px; padding: 20px; }
+      .x-card h2 { font-family: var(--x-pop); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--x-or); margin: 0 0 14px; font-weight: 600; }
+      .x-field { display: block; margin-bottom: 16px; }
+      .x-field:last-child { margin-bottom: 0; }
+      .x-field > span { display: block; font-size: 13px; color: #B9B9C2; margin-bottom: 6px; }
+      .x-in, .x-sel { width: 100%; min-height: 52px; border-radius: 14px; border: 1px solid var(--x-ln); background: var(--x-ch); color: #fff; font: 500 16px var(--x-pop); padding: 0 14px; }
+      .x-in:focus, .x-sel:focus { outline: 2px solid var(--x-or); outline-offset: 1px; }
+      .x-seg { display: flex; flex-wrap: wrap; gap: 8px; }
+      .x-seg label { flex: 1 1 auto; }
+      .x-seg input { position: absolute; opacity: 0; pointer-events: none; }
+      .x-seg label span { display: flex; align-items: center; justify-content: center; text-align: center; min-height: 52px; padding: 6px 14px; border-radius: 14px; border: 1px solid var(--x-ln); background: var(--x-ch); cursor: pointer; font-weight: 500; font-size: 15px; line-height: 1.25; }
+      .x-seg label span small { display: block; font-size: 12px; color: #B9B9C2; font-weight: 400; }
+      .x-seg input:checked + span { background: var(--x-or); border-color: var(--x-or); color: var(--x-ch); }
+      .x-seg input:checked + span small { color: var(--x-ch); }
+      .x-seg input:focus-visible + span { outline: 2px solid #fff; }
+      .x-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 22px; border-radius: 999px; border: 1px solid var(--x-ln); background: var(--x-ch2); color: #fff; font: 600 16px var(--x-pop); cursor: pointer; text-decoration: none; }
+      .x-btn:hover { border-color: #fff; }
+      .x-btn--go { background: var(--x-or); border-color: var(--x-or); color: var(--x-ch); }
+      .x-btn--go:hover { border-color: #fff; }
+      .x-btn--big { min-height: 64px; font-size: 20px; padding: 0 36px; width: 100%; }
+      .x-btn[disabled] { opacity: .4; cursor: default; }
+      .x-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+      .x-note { font-size: 13px; color: #B9B9C2; margin: 8px 0 0; }
+      [hidden] { display: none !important; }
+      .x-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 20; background: var(--x-ch2); color: #fff; border: 1px solid var(--x-or); border-radius: 14px; padding: 12px 18px; font-size: 14px; max-width: 90vw; text-align: center; }
+      .x-pick { position: absolute; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center; background: rgba(31,31,36,.85); padding: 20px; }
+      .x-pick .x-card { max-width: 420px; text-align: center; }
+      .x-warn { background: var(--x-ch); border: 1px solid var(--x-or); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; font-size: 14px; }
+      .x-file { font: 500 14px var(--x-pop); color: #B9B9C2; max-width: 100%; }
+      .x-file::file-selector-button { min-height: 44px; border-radius: 999px; border: 1px solid var(--x-ln); background: var(--x-ch); color: #fff; font: 600 14px var(--x-pop); padding: 0 16px; margin-right: 10px; cursor: pointer; }
+      .x-start { margin-top: 20px; }
+      .x-tpl { position: relative; }
+      .x-seg .x-tpl span { flex-direction: column; gap: 4px; padding: 8px 10px; }
+      .x-tpl img { height: 72px; max-width: 120px; object-fit: contain; border-radius: 6px; background: repeating-conic-gradient(#555 0 25%, #777 0 50%) 0 0 / 12px 12px; }
+      .x-ic.x-del { position: absolute; top: -8px; right: -8px; width: 36px; height: 36px; font-size: 14px; }
+      /* booth */
+      #booth { position: fixed; inset: 0; background: #000; overflow: hidden; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+      #booth.is-on { display: block; }
+      #live { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+      .x-tap { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3vh; padding: max(7vh, 40px) 20px max(6vh, 32px); cursor: pointer; background: var(--x-ch) center / cover no-repeat; }
+      .x-wt { margin: 0; text-align: center; max-width: 92vw; line-height: 1.1; overflow-wrap: anywhere; text-shadow: 0 4px 24px rgba(0,0,0,.35); }
+      .x-wprev { flex: 1 1 auto; min-height: 0; width: 100%; max-width: 92vw; object-fit: contain; }
+      .x-shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+      .x-tap span { margin-top: auto; max-width: 92vw; text-align: center; background: var(--x-or); color: var(--x-ch); font: 700 clamp(20px, 4vw, 32px) var(--x-pop); letter-spacing: .14em; padding: 18px 40px; border-radius: 999px; box-shadow: 0 10px 40px rgba(0,0,0,.4); animation: x-pulse 1.6s ease-in-out infinite; }
+      @keyframes x-pulse { 50% { transform: scale(1.05); } }
+      .x-count { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; font: 700 min(48vw, 48vh) var(--x-pf); color: #fff; text-shadow: 0 6px 40px rgba(0,0,0,.5); pointer-events: none; }
+      .x-count.is-on { display: flex; }
+      .x-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+      .x-flash.is-on { animation: x-flash .6s ease-out; }
+      @keyframes x-flash { 0% { opacity: 1; } 100% { opacity: 0; } }
+      .x-corner { position: absolute; top: max(10px, env(safe-area-inset-top)); display: flex; gap: 8px; opacity: 0; transition: opacity .2s; z-index: 2; }
+      .x-corner:hover, .x-corner:focus-within { opacity: 1; }
+      .x-corner--l { left: 0; top: 0; padding: max(10px, env(safe-area-inset-top)) 48px 48px 10px; touch-action: none; -webkit-touch-callout: none; }
+      .x-corner--r { right: 10px; }
+      .x-corner--l.is-hold { opacity: 1; }
+      .x-corner--l.is-hold .x-ic { animation: x-hold 2s linear forwards; }
+      @keyframes x-hold { to { background: var(--x-or); color: var(--x-ch); border-color: var(--x-or); transform: scale(1.25); } }
+      .x-ic { position: relative; width: 48px; height: 48px; border-radius: 50%; border: 1px solid rgba(255,255,255,.3); background: rgba(31,31,36,.7); color: #fff; font: 600 18px var(--x-pop); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+      .x-badge { position: absolute; top: -4px; right: -4px; min-width: 22px; height: 22px; border-radius: 11px; background: var(--x-or); color: var(--x-ch); font-weight: 700; font-size: 12px; line-height: 22px; padding: 0 5px; }
+      .x-info { position: absolute; left: 10px; bottom: max(10px, env(safe-area-inset-bottom)); font-size: 12px; color: rgba(255,255,255,.55); background: rgba(31,31,36,.5); padding: 4px 10px; border-radius: 8px; z-index: 2; }
+      /* review */
+      #review.is-on, #queue.is-on { display: block; }
+      .x-rev { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: center; min-height: calc(100dvh - 140px); }
+      .x-rev__pic { display: flex; justify-content: center; }
+      .x-rev__pic canvas { max-width: 100%; max-height: 72dvh; width: auto; height: auto; border-radius: 6px; box-shadow: 0 20px 60px rgba(0,0,0,.5); background: #fff; }
+      .x-stepper { display: flex; align-items: center; gap: 12px; }
+      .x-stepper b { font-size: 32px; min-width: 40px; text-align: center; }
+      .x-stack { display: grid; gap: 12px; }
+      @media (max-width: 760px) { .x-rev { grid-template-columns: 1fr; min-height: 0; } .x-rev__pic canvas { max-height: 56dvh; } }
+      /* queue */
+      .x-sheets { display: grid; gap: 20px; }
+      .x-sheet { background: var(--x-ch2); border: 1px solid var(--x-ln); border-radius: 20px; padding: 16px; }
+      .x-sheet canvas { width: 100%; height: auto; display: block; border-radius: 4px; background: #fff; margin-bottom: 12px; }
+      .x-sheet h3 { margin: 0 0 10px; font: 600 15px var(--x-pop); }
+      .x-sheet h3 small { color: #B9B9C2; font-weight: 400; margin-left: 6px; }
+      .x-empty { color: #B9B9C2; padding: 40px 0; text-align: center; }
+      .x-fill { position: absolute; left: 10px; top: calc(max(10px, env(safe-area-inset-top)) + 60px); z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: rgba(31,31,36,.75); border-radius: 14px; padding: 6px 8px 6px 12px; font-size: 14px; }
+      .x-fill .x-btn { min-height: 44px; padding: 0 16px; font-size: 14px; }
+      #printArea { display: none; }
+      @media print {
+        html, body { background: #fff !important; height: auto; margin: 0; }
+        .x-app, .nav, .foot { display: none !important; }
+        #printArea { display: block !important; overflow: hidden; }
+        #printArea img { display: block; max-width: none; }
+        #printArea img + img { break-before: page; page-break-before: always; }
+      }
+    </style>
+    <style>
+      .x-ed { grid-column: 1 / -1; }
+      .x-ed__wrap { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; margin-top: 14px; }
+      .x-ed__cv { display: block; max-width: 100%; max-height: 70vh; width: auto; height: auto; margin: 0 auto; background: #fff; border-radius: 6px; touch-action: none; cursor: move; }
+      .x-ed__p { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .x-ed__p .x-field { margin: 0; }
+      .x-ed__p .x-full { grid-column: 1 / -1; }
+      .x-ed .x-btn { min-height: 44px; padding: 0 16px; font-size: 14px; }
+      @media (max-width: 760px) { .x-ed__wrap { grid-template-columns: 1fr; } }
+    </style>
+    <style id="pageCss"></style>
+  </head>
+  <body>
+    <div class="page" id="top">
+      <main class="x-app">
+        <!-- SETUP -->
+        <section class="x-screen is-on" id="setup" aria-label="Setup">
+          <div class="x-wrap">
+            <div class="x-top">
+              <div>
+                <h1 class="x-brand">OctoSnap <em>Magnet Booth</em></h1>
+                <p class="x-sub">Set up the camera and the magnet, then hand over the booth.</p>
+              </div>
+              <div class="x-row">
+                <button class="x-btn" type="button" id="exportBtn">Export event</button>
+                <label class="x-btn" for="importIn">Import event</label>
+                <input type="file" accept="application/json,.json" id="importIn" hidden />
+                <button class="x-btn" type="button" data-fs>⛶ Fullscreen</button>
+              </div>
+            </div>
+            <div class="x-grid">
+              <div class="x-card">
+                <h2>Camera</h2>
+                <div class="x-warn" id="camErr" hidden>
+                  <strong>Camera unavailable.</strong> <span id="camErrMsg"></span><br />
+                  Take or pick a photo instead; framing and printing still work.
+                  <p style="margin:10px 0 0"><input class="x-file" type="file" accept="image/*" capture="user" id="fallbackFile" /></p>
+                </div>
+                <label class="x-field"><span>Camera</span><select class="x-sel" id="camSel"><option>Asking for permission…</option></select></label>
+                <p class="x-note" id="camRes">—</p>
+                <div class="x-field" style="margin-top:14px">
+                  <span>Mirror</span>
+                  <div class="x-seg">
+                    <label><input type="radio" name="mirror" value="1" checked /><span>Mirrored</span></label>
+                    <label><input type="radio" name="mirror" value="0" /><span>Normal</span></label>
+                  </div>
+                </div>
+                <div class="x-field">
+                  <span>Rotate</span>
+                  <div class="x-seg">
+                    <label><input type="radio" name="rot" value="0" checked /><span>0°</span></label>
+                    <label><input type="radio" name="rot" value="90" /><span>90°</span></label>
+                    <label><input type="radio" name="rot" value="180" /><span>180°</span></label>
+                    <label><input type="radio" name="rot" value="270" /><span>270°</span></label>
+                  </div>
+                </div>
+              </div>
+              <div class="x-card">
+                <h2>Magnet</h2>
+                <label class="x-field"><span>Name line</span><input class="x-in" id="nameIn" placeholder="Rahul &amp; Priya" value="Rahul &amp; Priya" /></label>
+                <label class="x-field"><span>Date line</span><input class="x-in" id="dateIn" placeholder="14 February 2026" /></label>
+                <p class="x-note" style="margin:-8px 0 0">Name and date print on built-in themes only.</p>
+              </div>
+              <div class="x-card">
+                <h2>Paper</h2>
+                <label class="x-field"><span>Paper size</span>
+                  <select class="x-sel" id="paperSel">
+                    <option value="p46">4 × 6 in</option>
+                    <option value="p57">5 × 7 in</option>
+                    <option value="a5">A5 · 148 × 210 mm</option>
+                    <option value="a4">A4 · 210 × 297 mm</option>
+                    <option value="a3">A3 · 297 × 420 mm</option>
+                    <option value="c">Custom…</option>
+                  </select>
+                </label>
+                <div class="x-field" id="customBox" hidden>
+                  <div class="x-row" style="flex-wrap:nowrap;margin-bottom:10px">
+                    <label class="x-field" style="flex:1;margin:0"><span>Width</span><input class="x-in" id="cw" type="number" min="1" step="0.1" value="4" /></label>
+                    <label class="x-field" style="flex:1;margin:0"><span>Height</span><input class="x-in" id="ch" type="number" min="1" step="0.1" value="6" /></label>
+                  </div>
+                  <div class="x-seg">
+                    <label><input type="radio" name="unit" value="in" checked /><span>inches</span></label>
+                    <label><input type="radio" name="unit" value="mm" /><span>mm</span></label>
+                  </div>
+                </div>
+                <div class="x-field">
+                  <span>Orientation</span>
+                  <div class="x-seg">
+                    <label><input type="radio" name="orient" value="port" checked /><span>Portrait</span></label>
+                    <label><input type="radio" name="orient" value="land" /><span>Landscape</span></label>
+                  </div>
+                </div>
+                <p class="x-note" id="paperNote" aria-live="polite"></p>
+              </div>
+              <div class="x-card">
+                <h2>Frame</h2>
+                <div class="x-field">
+                  <span>Built-in</span>
+                  <div class="x-seg">
+                    <label><input type="radio" name="theme" value="gold" checked /><span>Gold line</span></label>
+                    <label><input type="radio" name="theme" value="orange" /><span>Orange line</span></label>
+                    <label><input type="radio" name="theme" value="black" /><span>Black + white strip</span></label>
+                    <label><input type="radio" name="theme" value="bleed" /><span>Full bleed</span></label>
+                  </div>
+                </div>
+              </div>
+              <div class="x-card">
+                <h2>Welcome screen</h2>
+                <div class="x-field">
+                  <span>Background</span>
+                  <div class="x-seg">
+                    <label><input type="radio" name="wBg" value="color" checked /><span>Colour</span></label>
+                    <label><input type="radio" name="wBg" value="image" /><span>Image</span></label>
+                  </div>
+                </div>
+                <label class="x-field" id="wColorBox"><span>Background colour</span><input class="x-in" type="color" id="wColor" value="#1F1F24" style="padding:4px" /></label>
+                <div class="x-field" id="wImgBox" hidden>
+                  <span>Background image</span>
+                  <input class="x-file" type="file" accept="image/*" id="wImgIn" aria-label="Upload welcome background image" />
+                  <p class="x-note" id="wImgNote">No image yet.</p>
+                </div>
+                <label class="x-field"><span>Title</span><input class="x-in" id="wTitleIn" value="Rahul &amp; Priya" /></label>
+                <div class="x-row" style="flex-wrap:nowrap;margin-bottom:16px">
+                  <label class="x-field" style="flex:1;margin:0"><span>Size px</span><input class="x-in" type="number" id="wSize" min="16" max="240" value="72" /></label>
+                  <label class="x-field" style="flex:1;margin:0"><span>Colour</span><input class="x-in" type="color" id="wTColor" value="#ffffff" style="padding:4px" /></label>
+                </div>
+                <label class="x-field"><span>Font</span><select class="x-sel" id="wFont"><option value='italic 600 "Playfair Display", Georgia, serif'>Playfair italic</option><option value="600 Poppins, sans-serif">Poppins bold</option><option value="400 Poppins, sans-serif">Poppins</option><option value="400 Georgia, serif">Georgia</option><option value="400 Geist, sans-serif">Geist</option></select></label>
+                <label class="x-field"><span>Start button label</span><input class="x-in" id="wBtnIn" value="TAP TO START" /></label>
+                <div class="x-seg"><label><input type="checkbox" id="wPrevOn" checked /><span>Show live camera preview</span></label></div>
+              </div>
+              <div class="x-card">
+                <h2>Capture &amp; Print</h2>
+                <div class="x-row" style="flex-wrap:nowrap;align-items:flex-end;margin-bottom:16px">
+                  <label class="x-field" style="flex:1;margin:0"><span>Countdown, first photo (s)</span><input class="x-in" type="number" id="cd1" min="0" max="30" step="1" value="3" /></label>
+                  <label class="x-field" style="flex:1;margin:0"><span>Countdown, other photos (s)</span><input class="x-in" type="number" id="cd2" min="0" max="30" step="1" value="3" /></label>
+                </div>
+                <div class="x-row" style="flex-wrap:nowrap;align-items:flex-end;margin-bottom:16px">
+                  <label class="x-field" style="flex:1;margin:0"><span>Show each photo (s)</span><input class="x-in" type="number" id="showSec" min="0" max="30" step="0.5" value="2" /></label>
+                  <label class="x-field" style="flex:1;margin:0"><span>Delay between shots (s)</span><input class="x-in" type="number" id="gapSec" min="0" max="30" step="0.5" value="1" /></label>
+                </div>
+                <div class="x-seg" style="margin-bottom:16px">
+                  <label><input type="checkbox" id="autoPrint" /><span>Print automatically<small>Prints the sheet right after Keep</small></span></label>
+                  <label><input type="checkbox" id="printBtn" /><span>Show print button<small>On the review screen</small></span></label>
+                </div>
+                <div class="x-field">
+                  <span>Copies</span>
+                  <div class="x-seg">
+                    <label><input type="radio" name="copyMode" value="fixed" /><span>Fixed number</span></label>
+                    <label><input type="radio" name="copyMode" value="ask" checked /><span>Ask guest<small>1–6 on review</small></span></label>
+                  </div>
+                </div>
+                <label class="x-field" id="copiesBox" hidden><span>Copies per guest</span><input class="x-in" type="number" id="copiesFixed" min="1" max="6" step="1" value="1" /></label>
+              </div>
+              <div class="x-card">
+                <h2>Template Library</h2>
+                <div class="x-field">
+                  <input class="x-file" type="file" accept="image/png" multiple id="tplIn" aria-label="Upload template PNGs" />
+                  <p class="x-note">Design your template at the paper size × 300 px (4x6 = 1200×1800), leave photo windows transparent, export PNG.</p>
+                  <p class="x-note" id="tplNote" aria-live="polite"></p>
+                </div>
+                <div class="x-field" id="fillBox" hidden>
+                  <span>Slot fill</span>
+                  <div class="x-seg">
+                    <label><input type="radio" name="fill" value="same" checked /><span>Same photo in all windows<small>Copies of one guest</small></span></label>
+                    <label><input type="radio" name="fill" value="next" /><span>Next photo in next window<small>Fills across guests</small></span></label>
+                  </div>
+                  <div class="x-row" data-fillui hidden style="margin-top:10px">
+                    <b data-fillcount></b>
+                    <button class="x-btn" type="button" data-printnow>Print now</button>
+                    <button class="x-btn" type="button" data-clearsheet>Clear sheet</button>
+                  </div>
+                </div>
+                <div class="x-warn" id="tplPending" hidden>
+                  <strong id="tplPendName"></strong> has no transparent photo area.
+                  <div class="x-row" style="margin-top:10px">
+                    <button class="x-btn x-btn--go" type="button" id="tplOverlay">Use as top overlay over full photo</button>
+                    <button class="x-btn" type="button" id="tplSkip">Skip</button>
+                  </div>
+                </div>
+                <div class="x-seg" id="tplList" hidden></div>
+              </div>
+              <div class="x-card x-ed" id="layCard">
+                <h2>Photo Layout Editor</h2>
+                <div class="x-seg" style="margin-bottom:12px"><label><input type="checkbox" id="layOn" /><span>Use this layout in the booth<small>Shots = distinct photo numbers</small></span></label></div>
+                <div class="x-row">
+                  <button class="x-btn" type="button" data-lay="photo">+ Photo box</button>
+                  <button class="x-btn" type="button" data-lay="text">+ Text</button>
+                  <button class="x-btn" type="button" data-lay="detect">Detect windows</button>
+                  <button class="x-btn" type="button" data-lay="one">1 photo</button>
+                  <button class="x-btn" type="button" data-lay="six">6 magnets 2x2 on 4x6</button>
+                  <button class="x-btn" type="button" data-lay="strip">Strip of 3</button>
+                  <button class="x-btn" type="button" data-lay="below" aria-pressed="false" id="layBelow">Template above photos</button>
+                </div>
+                <div class="x-ed__wrap">
+                  <canvas class="x-ed__cv" id="layCv" width="600" height="900" aria-label="Layout preview: tap to select, drag to move, drag the corner handle to resize"></canvas>
+                  <div>
+                    <p class="x-note" id="layNote" style="margin:0 0 12px">Tap an element to edit it. Template comes from the selected Template Library design.</p>
+                    <div class="x-ed__p" id="layPanel" hidden>
+                      <label class="x-field"><span>W px</span><input class="x-in" type="number" data-k="w" /></label>
+                      <label class="x-field"><span>H px</span><input class="x-in" type="number" data-k="h" /></label>
+                      <label class="x-field"><span>X px</span><input class="x-in" type="number" data-k="x" /></label>
+                      <label class="x-field"><span>Y px</span><input class="x-in" type="number" data-k="y" /></label>
+                      <label class="x-field"><span>Rotate °</span><input class="x-in" type="number" step="1" data-k="rot" /></label>
+                      <label class="x-field" data-for="photo"><span>Photo number</span><input class="x-in" type="number" min="1" step="1" data-k="n" /></label>
+                      <label class="x-field x-full" data-for="text"><span>Text</span><input class="x-in" data-k="text" /></label>
+                      <label class="x-field" data-for="text"><span>Size px</span><input class="x-in" type="number" min="8" data-k="size" /></label>
+                      <label class="x-field" data-for="text"><span>Colour</span><input class="x-in" type="color" data-k="color" style="padding:4px" /></label>
+                      <label class="x-field x-full" data-for="text"><span>Font</span><select class="x-sel" data-k="font"><option value='italic 600 "Playfair Display", Georgia, serif'>Playfair italic</option><option value="600 Poppins, sans-serif">Poppins bold</option><option value="400 Poppins, sans-serif">Poppins</option><option value="400 Georgia, serif">Georgia</option><option value="400 Geist, sans-serif">Geist</option></select></label>
+                      <div class="x-row x-full">
+                        <button class="x-btn" type="button" data-lay="dup">Duplicate</button>
+                        <button class="x-btn" type="button" data-lay="del">Delete</button>
+                        <button class="x-btn" type="button" data-lay="fwd">Forward</button>
+                        <button class="x-btn" type="button" data-lay="back">Backward</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="x-start x-row">
+              <button class="x-btn x-btn--go x-btn--big" type="button" id="startBtn">Start the booth</button>
+            </div>
+            <p class="x-note" style="text-align:center">Queue: <span data-qcount>0</span> sheets · <button class="x-btn" type="button" data-goqueue style="min-height:44px">Open queue</button></p>
+          </div>
+        </section>
+
+        <!-- BOOTH -->
+        <section class="x-screen" id="booth" aria-label="Booth">
+          <canvas id="live" width="900" height="900"></canvas>
+          <div class="x-tap" id="tap" role="button" tabindex="0" aria-label="Tap to start">
+            <p class="x-wt" id="wTitle"></p>
+            <canvas class="x-wprev" id="wPrev" width="10" height="10" aria-hidden="true"></canvas>
+            <span id="wBtn">TAP TO START</span>
+          </div>
+          <canvas class="x-shot" id="shotCv" hidden aria-hidden="true"></canvas>
+          <div class="x-count" id="count" aria-live="assertive"></div>
+          <div class="x-flash" id="flash"></div>
+          <div class="x-corner x-corner--l" id="exitZone"><button class="x-ic" type="button" id="backBtn" aria-label="Back to setup (hold 2 seconds)">←</button></div>
+          <div class="x-corner x-corner--r">
+            <button class="x-ic" type="button" data-fs aria-label="Fullscreen">⛶</button>
+            <button class="x-ic" type="button" data-goqueue aria-label="Queue">▦<span class="x-badge" data-qcount>0</span></button>
+          </div>
+          <div class="x-info" id="boothInfo"></div>
+          <div class="x-fill" data-fillui hidden>
+            <b data-fillcount></b>
+            <button class="x-btn" type="button" data-printnow>Print now</button>
+            <button class="x-btn" type="button" data-clearsheet>Clear sheet</button>
+          </div>
+          <div class="x-pick" id="pick" hidden>
+            <div class="x-card">
+              <h2>No camera</h2>
+              <p style="margin:0 0 16px">Take or choose a photo to make your magnet.</p>
+              <div class="x-row" style="justify-content:center">
+                <label class="x-btn x-btn--go" for="boothFile">Choose photo</label>
+                <button class="x-btn" type="button" id="pickClose">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- REVIEW -->
+        <section class="x-screen" id="review" aria-label="Review">
+          <div class="x-wrap">
+            <div class="x-rev">
+              <div class="x-rev__pic" id="revPic"></div>
+              <div class="x-stack">
+                <h2 class="x-brand" style="font-size:32px">Looking <em>good?</em></h2>
+                <div class="x-card" id="copiesCard">
+                  <h2>Sheet copies</h2>
+                  <div class="x-stepper">
+                    <button class="x-ic" type="button" id="cMinus" aria-label="Fewer copies">−</button>
+                    <b id="cVal">1</b>
+                    <button class="x-ic" type="button" id="cPlus" aria-label="More copies">+</button>
+                  </div>
+                </div>
+                <button class="x-btn x-btn--go x-btn--big" type="button" id="keepBtn">Keep</button>
+                <button class="x-btn x-btn--go x-btn--big" type="button" id="printNowBtn" hidden>Print</button>
+                <button class="x-btn x-btn--big" type="button" id="retakeBtn">Retake</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- QUEUE -->
+        <section class="x-screen" id="queue" aria-label="Print queue">
+          <div class="x-wrap">
+            <div class="x-top">
+              <div>
+                <h1 class="x-brand">Print <em>queue</em></h1>
+                <p class="x-sub">Sheets at 300 DPI, sized to the chosen paper. <span data-qcount>0</span> sheets queued.</p>
+              </div>
+              <div class="x-row">
+                <button class="x-btn x-btn--go" type="button" id="qBooth">Back to booth</button>
+                <button class="x-btn" type="button" id="qSetup">Setup</button>
+                <button class="x-btn" type="button" id="qClear">Clear</button>
+              </div>
+            </div>
+            <div class="x-sheets" id="sheets"></div>
+          </div>
+        </section>
+      </main>
+      <div id="printArea"></div>
+    </div>
+    <input type="file" accept="image/*" capture="user" id="boothFile" hidden />
+    <script src="hark.js"></script>
+    <script>
+      (() => {
+        const $ = (s) => document.querySelector(s);
+        const $$ = (s) => [...document.querySelectorAll(s)];
+        const DPI = 300;
+        const PAPERS = { p46: [4, 6, "in", "4 × 6 in"], p57: [5, 7, "in", "5 × 7 in"], a5: [148, 210, "mm", "A5"], a4: [210, 297, "mm", "A4"], a3: [297, 420, "mm", "A3"] };
+        const PX = { in: DPI, mm: DPI / 25.4 }, MAG = 2 * DPI;
+        const COLORS = { gold: "#C9A24A", orange: "#F47B20", ch: "#1F1F24" };
+        const S = { stream: null, video: document.createElement("video"), useFile: false, fileSrc: null, shot: null, sheet: null, copies: 1, queue: [], counting: false, tpls: [], pending: [] };
+        S.video.muted = true; S.video.playsInline = true; S.video.setAttribute("playsinline", "");
+
+        const val = (n) => document.querySelector(`input[name="${n}"]:checked`).value;
+        const setRadio = (n, v) => (document.querySelector(`input[name="${n}"][value="${v}"]`).checked = true);
+        const num = (s, d) => { const v = parseFloat($(s).value); return isFinite(v) && v >= 0 ? v : d; };
+        /* paper in px at 300 DPI, portrait = short side across */
+        function paper() {
+          const k = $("#paperSel").value, land = val("orient") === "land", u = PAPERS[k] ? PAPERS[k][2] : val("unit");
+          const lim = (v) => Math.min(17 * DPI / PX[u], Math.max(DPI / PX[u], +v || 4));
+          const [a, b, , name] = PAPERS[k] || [lim($("#cw").value), lim($("#ch").value), u, "Custom"];
+          const s = Math.min(a, b), l = Math.max(a, b), [pw, ph] = land ? [l, s] : [s, l];
+          return { w: Math.round(pw * PX[u]), h: Math.round(ph * PX[u]), pw: pw + u, ph: ph + u, label: `${PAPERS[k] ? name : `Custom ${pw} × ${ph} ${u}`} ${land ? "landscape" : "portrait"}` };
+        }
+        const grid = (W, H) => { const cols = Math.floor(W / MAG), rows = Math.floor(H / MAG); return { cols, rows, n: cols * rows }; };
+        function opts() {
+          const tpl = S.tpls.find((t) => t.id === val("theme"));
+          const layout = layOn();
+          return { layout, mirror: val("mirror") === "1", rot: +val("rot"), paper: paper(), tpl, next: !layout && !!tpl && tpl.slots.length > 1 && val("fill") === "next", theme: val("theme"), cd1: Math.round(num("#cd1", 3)), cd2: Math.round(num("#cd2", 3)), show: num("#showSec", 2), gap: num("#gapSec", 1), autoPrint: $("#autoPrint").checked, printBtn: $("#printBtn").checked, ask: val("copyMode") === "ask", fixed: Math.min(6, Math.max(1, Math.round(num("#copiesFixed", 1)) || 1)), name: $("#nameIn").value.trim(), date: $("#dateIn").value.trim() };
+        }
+        function updateSetup() {
+          const o = opts(), P = o.paper, n = grid(P.w, P.h).n, t = o.tpl;
+          $("#customBox").hidden = $("#paperSel").value !== "c";
+          $("#paperNote").textContent = `${P.w} × ${P.h} px at 300 DPI · ` + (t ? (t.overlay ? "full-photo overlay" : `${t.slots.length} window${t.slots.length > 1 ? "s" : ""}`) : n ? `${n} magnets per sheet` : "too small for a 2 × 2 in magnet") + (o.layout ? ` · custom layout, ${layNums().length} shot${layNums().length > 1 ? "s" : ""}` : "");
+          $("#startBtn").disabled = !t && !n && !o.layout;
+          $("#fillBox").hidden = !(t && t.slots.length > 1) || o.layout;
+          $("#copiesBox").hidden = o.ask;
+          updateFill(); drawEd(); applyWelcome();
+        }
+        /* welcome (attract) screen in the booth */
+        const W = { img: null, prev: true };
+        function applyWelcome() {
+          const img = val("wBg") === "image";
+          $("#wColorBox").hidden = img; $("#wImgBox").hidden = !img;
+          const tap = $("#tap"), title = $("#wTitle"), f = /^((?:italic )?\d+) (.*)$/.exec($("#wFont").value) || ["", "600", "Poppins, sans-serif"];
+          tap.style.backgroundColor = $("#wColor").value;
+          tap.style.backgroundImage = img && W.img ? `url("${W.img}")` : "none";
+          title.textContent = $("#wTitleIn").value.trim(); title.hidden = !title.textContent;
+          title.style.font = `${f[1]} min(${Math.max(16, num("#wSize", 72))}px, 14vw) ${f[2]}`;
+          title.style.color = $("#wTColor").value;
+          const lbl = $("#wBtnIn").value.trim() || "TAP TO START";
+          $("#wBtn").textContent = lbl; tap.setAttribute("aria-label", lbl);
+          W.prev = $("#wPrevOn").checked; $("#wPrev").hidden = !W.prev;
+        }
+        function updateFill() {
+          const o = opts(), t = o.tpl;
+          $$("[data-fillui]").forEach((el) => (el.hidden = !o.next));
+          if (!o.next) return;
+          $$("[data-fillcount]").forEach((el) => (el.textContent = `${t.filled.length} of ${t.slots.length} windows filled`));
+          $$("[data-printnow]").forEach((b) => (b.disabled = !t.filled.length));
+        }
+
+        /* ---------- screens ---------- */
+        function show(id) {
+          $$(".x-screen").forEach((s) => s.classList.toggle("is-on", s.id === id));
+          if (id === "booth") startLoop(); else stopLoop();
+          if (id === "queue") renderQueue();
+          window.scrollTo(0, 0);
+        }
+
+        /* ---------- camera ---------- */
+        const camSel = $("#camSel");
+        function camError(e) {
+          S.useFile = true;
+          $("#camErr").hidden = false;
+          $("#camErrMsg").textContent = (e && (e.message || e.name)) || "No camera access.";
+          camSel.innerHTML = "<option>No camera</option>"; camSel.disabled = true;
+          $("#camRes").textContent = S.fileSrc ? "Using a photo file" : "Pick a photo to continue.";
+        }
+        function pickDefault(cams) {
+          const ext = cams.find((c) => /usb|external|logi|elgato|capture|hdmi|cam link|uvc/i.test(c.label) && !/integrated|built-in|facetime|front|back|rear/i.test(c.label));
+          if (ext) return ext.deviceId;
+          const front = cams.find((c) => /front|user|facetime|integrated|built-in/i.test(c.label));
+          return (front || cams[0] || {}).deviceId;
+        }
+        async function listCams(keep) {
+          const devs = await navigator.mediaDevices.enumerateDevices();
+          const cams = devs.filter((d) => d.kind === "videoinput");
+          if (!cams.length) return camError(new Error("No camera found."));
+          const cur = keep && cams.some((c) => c.deviceId === camSel.value) ? camSel.value : pickDefault(cams);
+          camSel.disabled = false;
+          camSel.innerHTML = "";
+          cams.forEach((c, i) => camSel.add(new Option(c.label || `Camera ${i + 1}`, c.deviceId)));
+          camSel.value = cur;
+          return cur;
+        }
+        async function openCam(deviceId) {
+          if (S.stream) S.stream.getTracks().forEach((t) => t.stop());
+          const v = { width: { ideal: 1920 }, height: { ideal: 1080 } };
+          if (deviceId) v.deviceId = { exact: deviceId }; else v.facingMode = "user";
+          S.stream = await navigator.mediaDevices.getUserMedia({ video: v, audio: false });
+          S.video.srcObject = S.stream;
+          await S.video.play().catch(() => {});
+          await new Promise((r) => (S.video.videoWidth ? r() : (S.video.onloadedmetadata = r)));
+          S.useFile = false; $("#camErr").hidden = true;
+          updateInfo();
+        }
+        function updateInfo() {
+          const name = S.useFile ? "Photo file" : (camSel.selectedOptions[0] || {}).text || "Camera";
+          const res = S.useFile ? (S.fileSrc ? `${S.fileSrc.width}×${S.fileSrc.height}` : "") : `${S.video.videoWidth}×${S.video.videoHeight}`;
+          $("#camRes").textContent = res ? `${name} · ${res}` : name;
+          $("#boothInfo").textContent = `${name} · ${res}`;
+        }
+        async function initCam() {
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return camError(new Error("This browser cannot open the camera here (needs HTTPS)."));
+          try {
+            const tmp = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            tmp.getTracks().forEach((t) => t.stop());
+            const id = await listCams(false);
+            if (id) await openCam(id);
+            navigator.mediaDevices.addEventListener("devicechange", async () => {
+              const before = camSel.value;
+              try { const id = await listCams(true); if (id && id !== before) await openCam(id); } catch (e) {}
+            });
+          } catch (e) { camError(e); }
+        }
+        camSel.addEventListener("change", () => openCam(camSel.value).catch(camError));
+
+        /* ---------- rendering ---------- */
+        function srcDims(src) { return src.videoWidth ? [src.videoWidth, src.videoHeight] : [src.width, src.height]; }
+        function drawPhoto(ctx, src, o, x, y, w, h) {
+          const [sw, sh] = srcDims(src);
+          if (!sw) { ctx.fillStyle = "#333"; ctx.fillRect(x, y, w, h); return; }
+          const turned = o.rot % 180 !== 0;
+          const ew = turned ? sh : sw, eh = turned ? sw : sh;
+          const s = Math.max(w / ew, h / eh);
+          ctx.save();
+          ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+          ctx.translate(x + w / 2, y + h / 2);
+          if (o.mirror) ctx.scale(-1, 1);
+          ctx.rotate((o.rot * Math.PI) / 180);
+          ctx.drawImage(src, (-sw * s) / 2, (-sh * s) / 2, sw * s, sh * s);
+          ctx.restore();
+        }
+        function fitFont(ctx, text, weight, family, size, maxW) {
+          let f = size;
+          do { ctx.font = `${weight} ${f}px ${family}`; f -= 1; } while (ctx.measureText(text).width > maxW && f > 6);
+        }
+        function drawText(ctx, o, W, y, h, color) {
+          if (!o.name && !o.date) return;
+          ctx.save();
+          ctx.fillStyle = color; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          const maxW = W * 0.86;
+          if (o.name && o.date) {
+            fitFont(ctx, o.name, "italic 600", '"Playfair Display", Georgia, serif', h * 0.4, maxW);
+            ctx.fillText(o.name, W / 2, y + h * 0.4);
+            fitFont(ctx, o.date.toUpperCase(), "500", "Poppins, system-ui, sans-serif", h * 0.17, maxW);
+            ctx.fillText(o.date.toUpperCase(), W / 2, y + h * 0.75);
+          } else if (o.name) {
+            fitFont(ctx, o.name, "italic 600", '"Playfair Display", Georgia, serif', h * 0.46, maxW);
+            ctx.fillText(o.name, W / 2, y + h * 0.52);
+          } else {
+            fitFont(ctx, o.date.toUpperCase(), "500", "Poppins, system-ui, sans-serif", h * 0.24, maxW);
+            ctx.fillText(o.date.toUpperCase(), W / 2, y + h / 2);
+          }
+          ctx.restore();
+        }
+        /* template sheet: photo cover-fit behind each window, template on top; empty windows get `empty` fill */
+        function renderTpl(ctx, W, H, o, srcs, empty) {
+          ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+          o.tpl.slots.forEach((s, i) => {
+            const r = [s.x * W, s.y * H, s.w * W, s.h * H];
+            if (srcs[i]) drawPhoto(ctx, srcs[i], o, ...r);
+            else if (empty) { ctx.fillStyle = empty; ctx.fillRect(...r); }
+          });
+          ctx.drawImage(o.tpl.img, 0, 0, W, H);
+        }
+        /* photo per window: same photo everywhere, or filled windows + `cur` in the next one */
+        function srcsFor(o, cur) {
+          const t = o.tpl;
+          return t.slots.map((_, i) => (!o.next ? cur : i < t.filled.length ? t.filled[i] : i === t.filled.length ? cur : null));
+        }
+        /* built-in theme: 2×2 in magnets tiled and centred, with light cut marks */
+        function tile(ctx, W, H, m) {
+          const g = grid(W, H), x0 = (W - g.cols * MAG) / 2, y0 = (H - g.rows * MAG) / 2, x1 = W - x0, y1 = H - y0;
+          for (let i = 0; i < g.n; i++) ctx.drawImage(m, x0 + (i % g.cols) * MAG, y0 + Math.floor(i / g.cols) * MAG);
+          const mark = (x, y, dx, dy) => {
+            const M = 24, room = dy < 0 ? y : dy > 0 ? H - y : dx < 0 ? x : W - x;
+            const [a, b] = room >= M + 6 ? [6, M + 6] : [room, room - M];
+            ctx.beginPath(); ctx.moveTo(x + dx * a, y + dy * a); ctx.lineTo(x + dx * b, y + dy * b); ctx.stroke();
+          };
+          ctx.strokeStyle = "rgba(0,0,0,0.25)"; ctx.lineWidth = 2;
+          for (let c = 0; c <= g.cols; c++) { const x = x0 + c * MAG; mark(x, y0, 0, -1); mark(x, y1, 0, 1); }
+          for (let r = 0; r <= g.rows; r++) { const y = y0 + r * MAG; mark(x0, y, -1, 0); mark(x1, y, 1, 0); }
+        }
+        function finalSheet(o, srcs) {
+          const P = o.paper, cv = document.createElement("canvas"), ctx = cv.getContext("2d");
+          cv.width = P.w; cv.height = P.h;
+          if (o.layout) renderLayout(ctx, P.w, P.h, o, srcs, false);
+          else if (o.tpl) renderTpl(ctx, P.w, P.h, o, srcs, null);
+          else {
+            const m = document.createElement("canvas"); m.width = m.height = MAG;
+            drawMagnet(m.getContext("2d"), MAG, MAG, srcs[0], o);
+            ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, P.w, P.h);
+            tile(ctx, P.w, P.h, m);
+          }
+          return { canvas: cv, paper: P };
+        }
+        function drawMagnet(ctx, W, H, src, o) {
+          const hasText = !!(o.name || o.date);
+          const strip = hasText ? Math.round(Math.min(W, H) * 0.17) : 0;
+          ctx.clearRect(0, 0, W, H);
+          if (o.theme === "bleed") {
+            drawPhoto(ctx, src, o, 0, 0, W, H);
+            if (hasText) {
+              const sh = Math.round(strip * 0.85);
+              ctx.fillStyle = "rgba(31,31,36,0.55)"; ctx.fillRect(0, H - sh, W, sh);
+              drawText(ctx, o, W, H - sh, sh, "#fff");
+            }
+            return;
+          }
+          const b = Math.round(W * (o.theme === "black" ? 0.05 : 0.045));
+          const bottom = hasText ? strip : b;
+          ctx.fillStyle = o.theme === "black" ? COLORS.ch : "#fff";
+          ctx.fillRect(0, 0, W, H);
+          if (o.theme === "black") {
+            drawPhoto(ctx, src, o, b, b, W - 2 * b, H - b - bottom - (hasText ? b * 0.6 : 0));
+            if (hasText) {
+              ctx.fillStyle = "#fff"; ctx.fillRect(b, H - b * 0.6 - bottom, W - 2 * b, bottom - b * 0.4);
+              drawText(ctx, o, W, H - b * 0.6 - bottom, bottom - b * 0.4, COLORS.ch);
+            }
+            return;
+          }
+          const line = COLORS[o.theme];
+          drawPhoto(ctx, src, o, b, b, W - 2 * b, H - b - bottom);
+          const lw = Math.max(1.5, W * 0.006), inset = b * 0.45;
+          ctx.strokeStyle = line; ctx.lineWidth = lw;
+          ctx.strokeRect(inset, inset, W - 2 * inset, H - 2 * inset);
+          if (hasText) drawText(ctx, o, W, H - bottom, bottom - inset * 0.6, COLORS.ch);
+        }
+
+        /* ---------- live preview loop ---------- */
+        const live = $("#live"), lctx = live.getContext("2d");
+        let raf = 0;
+        function tick() {
+          const o = opts(), P = o.paper, k = 1000 / Math.max(P.w, P.h), src = (S.useFile ? S.fileSrc : S.video) || { width: 0, height: 0 };
+          const sheet = o.tpl || o.layout, w = sheet ? Math.round(P.w * k) : 1000, h = sheet ? Math.round(P.h * k) : 1000;
+          if (live.width !== w || live.height !== h) { live.width = w; live.height = h; }
+          if (o.layout) renderLayout(lctx, w, h, o, layNums().map((_, i) => (S.shots && S.shots[i]) || src), false);
+          else if (o.tpl) renderTpl(lctx, w, h, o, srcsFor(o, src), "#ddd");
+          else drawMagnet(lctx, w, h, src, o);
+          if (W.prev && !$("#tap").hidden) {
+            const wp = $("#wPrev");
+            if (wp.width !== w || wp.height !== h) { wp.width = w; wp.height = h; }
+            wp.getContext("2d").drawImage(live, 0, 0);
+          }
+          raf = requestAnimationFrame(tick);
+        }
+        function startLoop() { if (!raf) raf = requestAnimationFrame(tick); updateInfo(); }
+        function stopLoop() { cancelAnimationFrame(raf); raf = 0; }
+
+        /* ---------- capture ---------- */
+        const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+        async function countdown() {
+          if (S.counting) return;
+          if (S.useFile && !S.fileSrc) { $("#pick").hidden = false; return; }
+          S.counting = true;
+          $("#tap").hidden = true;
+          const c = $("#count"), o = opts(), shots = o.layout ? layNums().length : 1;
+          S.shots = [];
+          for (let s = 0; s < shots; s++) {
+            const sec = s === 0 ? o.cd1 : o.cd2;
+            c.classList.add("is-on");
+            for (let n = sec; n > 0; n--) { c.textContent = n; await wait(1000); }
+            c.classList.remove("is-on"); c.textContent = "";
+            let frame = S.fileSrc;
+            if (!S.useFile) {
+              const [vw, vh] = srcDims(S.video);
+              frame = document.createElement("canvas");
+              frame.width = vw; frame.height = vh;
+              frame.getContext("2d").drawImage(S.video, 0, 0, vw, vh);
+            }
+            S.shots.push(frame);
+            const f = $("#flash"); f.classList.remove("is-on"); void f.offsetWidth; f.classList.add("is-on");
+            await wait(350);
+            if (o.show > 0) {
+              const sc = $("#shotCv"), [fw, fh] = srcDims(frame), turned = o.rot % 180 !== 0;
+              sc.width = turned ? fh : fw; sc.height = turned ? fw : fh;
+              drawPhoto(sc.getContext("2d"), frame, o, 0, 0, sc.width, sc.height);
+              sc.hidden = false; await wait(o.show * 1000); sc.hidden = true;
+            }
+            if (s < shots - 1 && o.gap > 0) await wait(o.gap * 1000);
+          }
+          const frames = S.shots; S.shots = null;
+          S.counting = false; $("#tap").hidden = false;
+          review(frames[0], frames);
+        }
+        async function review(frame, frames) {
+          await fontsReady;
+          const o = opts();
+          S.shot = frame; S.next = o.next;
+          S.sheet = finalSheet(o, o.layout ? layNums().map((_, i) => (frames && frames[i]) || frame) : o.tpl ? srcsFor(o, frame) : [frame]);
+          S.copies = o.ask ? 1 : o.fixed; $("#cVal").textContent = S.copies; $("#copiesCard").hidden = o.next || !o.ask;
+          $("#printNowBtn").hidden = o.next || !o.printBtn;
+          const pic = $("#revPic"); pic.innerHTML = ""; pic.appendChild(S.sheet.canvas);
+          show("review");
+        }
+        /* next-window mode: queue and print the sheet as filled so far, then start a new one */
+        function finish() {
+          const o = opts(), t = o.tpl;
+          if (!o.next || !t.filled.length) return;
+          const sh = finalSheet(o, t.slots.map((_, i) => t.filled[i] || null));
+          t.filled = []; S.queue.push(sh); setCount(); updateFill();
+          printSheet(sh);
+        }
+        async function loadFile(file) {
+          if (!file) return null;
+          try { return await createImageBitmap(file, { imageOrientation: "from-image" }); }
+          catch (e) { return await createImageBitmap(file); }
+        }
+
+        /* ---------- queue + sheets ---------- */
+        function setCount() { $$("[data-qcount]").forEach((el) => (el.textContent = S.queue.length)); }
+        function renderQueue() {
+          setCount();
+          const box = $("#sheets"); box.innerHTML = "";
+          if (!S.queue.length) { box.innerHTML = '<p class="x-empty">No sheets yet. Keep a photo in the booth and it lands here.</p>'; return; }
+          S.queue.forEach((sh, i) => {
+            const cv = document.createElement("canvas"), P = sh.paper, k = Math.min(1, 1200 / Math.max(P.w, P.h));
+            cv.width = Math.round(P.w * k); cv.height = Math.round(P.h * k);
+            cv.getContext("2d").drawImage(sh.canvas, 0, 0, cv.width, cv.height);
+            cv.style.maxWidth = `min(100%, ${P.w > P.h ? 900 : 480}px)`;
+            const card = document.createElement("div"); card.className = "x-sheet";
+            card.innerHTML = `<h3>Sheet ${i + 1}<small>${P.label} · ${P.w} × ${P.h} px</small></h3>`;
+            card.appendChild(cv);
+            const row = document.createElement("div"); row.className = "x-row";
+            const pb = document.createElement("button"); pb.className = "x-btn x-btn--go"; pb.type = "button"; pb.textContent = "Print";
+            pb.onclick = () => printSheet(sh);
+            const db = document.createElement("button"); db.className = "x-btn"; db.type = "button"; db.textContent = "Download PNG";
+            db.onclick = () => sh.canvas.toBlob((b) => { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = `octosnap-sheet-${i + 1}.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }, "image/png");
+            row.append(pb, db); card.appendChild(row); box.appendChild(card);
+          });
+        }
+        /* @page matches the sheet's paper exactly, margin 0, image fills the page */
+        function printSheet(sh, n = 1) {
+          const P = sh.paper, area = $("#printArea"); area.innerHTML = "";
+          $("#pageCss").textContent = `@page { size: ${P.pw} ${P.ph}; margin: 0; } @media print { #printArea { width: ${P.pw}; height: calc(${P.ph} * ${n}); } #printArea img { width: ${P.pw}; height: ${P.ph}; } }`;
+          const url = sh.canvas.toDataURL("image/png");
+          let left = n;
+          for (let i = 0; i < n; i++) {
+            const img = document.createElement("img");
+            img.alt = "Print sheet";
+            img.onload = () => { if (--left === 0) setTimeout(() => window.print(), 50); };
+            img.src = url;
+            area.appendChild(img);
+          }
+        }
+        window.addEventListener("afterprint", () => ($("#printArea").innerHTML = ""));
+
+        /* ---------- wiring ---------- */
+        const fontsReady = Promise.all([
+          document.fonts.load('italic 600 40px "Playfair Display"'),
+          document.fonts.load("500 20px Poppins"),
+        ]).catch(() => {});
+        function toggleFs() {
+          const d = document;
+          try {
+            let p;
+            if (d.fullscreenElement || d.webkitFullscreenElement) p = (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+            else {
+              const el = d.documentElement, fn = el.requestFullscreen || el.webkitRequestFullscreen;
+              if (!fn) return toast("Fullscreen isn't available in this browser. Use your browser's menu or add the page to your home screen.");
+              toast("Entering fullscreen…");
+              p = fn.call(el);
+            }
+            if (p && p.catch) p.catch(() => toast("This browser blocked fullscreen. Try your browser's fullscreen key (F11)."));
+          } catch (e) { toast("This browser blocked fullscreen. Try your browser's fullscreen key (F11)."); }
+        }
+        $$("[data-fs]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); toggleFs(); }));
+        $$("[data-goqueue]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); if (!S.counting) show("queue"); }));
+        $("#startBtn").addEventListener("click", async () => {
+          show("booth");
+        });
+        /* operator exit: hold the top-left corner for 2 s (keyboard Enter on the hidden button still works) */
+        const exitZone = $("#exitZone");
+        let holdT = 0;
+        const endHold = () => { clearTimeout(holdT); exitZone.classList.remove("is-hold"); };
+        exitZone.addEventListener("pointerdown", (e) => {
+          e.preventDefault(); e.stopPropagation(); endHold();
+          void exitZone.offsetWidth; exitZone.classList.add("is-hold");
+          holdT = setTimeout(() => { endHold(); if (!S.counting) show("setup"); }, 2000);
+        });
+        ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => exitZone.addEventListener(ev, endHold));
+        exitZone.addEventListener("click", (e) => e.stopPropagation());
+        $("#booth").addEventListener("contextmenu", (e) => e.preventDefault());
+        $("#backBtn").addEventListener("click", (e) => { e.stopPropagation(); if (e.detail === 0 && !S.counting) show("setup"); });
+        $("#wImgIn").addEventListener("change", (e) => {
+          const file = e.target.files[0]; if (!file) return;
+          const r = new FileReader();
+          r.onload = () => { W.img = r.result; $("#wImgNote").textContent = file.name; updateSetup(); };
+          r.readAsDataURL(file);
+        });
+
+        /* ---------- export / import event ---------- */
+        const fields = () => $$("#setup input, #setup select").filter((i) => i.type !== "file" && i !== camSel && !i.closest("#layPanel") && !i.closest("#tplList") && i.name !== "theme" && (i.id || i.name));
+        function tplData(t) {
+          if (/^data:/.test(t.url)) return t.url;
+          const cv = document.createElement("canvas"); cv.width = t.w; cv.height = t.h;
+          cv.getContext("2d").drawImage(t.img, 0, 0); return cv.toDataURL("image/png");
+        }
+        $("#exportBtn").addEventListener("click", () => {
+          const f = {};
+          fields().forEach((i) => { if (i.type === "radio") { if (i.checked) f[i.name] = i.value; } else f[i.id] = i.type === "checkbox" ? i.checked : i.value; });
+          const th = val("theme"), ti = S.tpls.findIndex((t) => t.id === th);
+          const data = {
+            app: "octosnap", version: 1, fields: f, theme: ti >= 0 ? { tpl: ti } : th, welcomeImg: W.img,
+            templates: S.tpls.map((t) => ({ name: t.name, w: t.w, h: t.h, slots: t.slots, overlay: !!t.overlay, url: tplData(t) })),
+            layout: { els: L.els, below: L.below },
+          };
+          const slug = ($("#nameIn").value.trim() || "event").replace(/[^\w]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "event";
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: "application/json" }));
+          a.download = `octosnap-${slug}.json`; a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+          toast("Event exported.");
+        });
+        const loadImg = (src) => new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = no; im.src = src; });
+        $("#importIn").addEventListener("change", async (e) => {
+          const file = e.target.files[0]; e.target.value = ""; if (!file) return;
+          let d;
+          try { d = JSON.parse(await file.text()); } catch (err) { return toast("That file isn't a valid event export."); }
+          if (!d || d.app !== "octosnap") return toast("That file isn't an OctoSnap event.");
+          Object.entries(d.fields || {}).forEach(([k, v]) => {
+            const el = document.getElementById(k);
+            if (el && el.closest("#setup")) { if (el.type === "checkbox") el.checked = !!v; else el.value = v; }
+            else { const r = document.querySelector(`#setup input[name="${k}"][value="${v}"]`); if (r) r.checked = true; }
+          });
+          W.img = d.welcomeImg || null; $("#wImgNote").textContent = W.img ? "Imported image" : "No image yet.";
+          S.tpls.forEach((t) => URL.revokeObjectURL(t.url)); S.tpls = []; S.pending = []; nextPending();
+          for (const t of d.templates || []) {
+            const img = await loadImg(t.url).catch(() => null);
+            if (!img) continue;
+            S.tpls.push({ id: "t" + ++tplSeq, name: String(t.name).replace(/[<>&"]/g, ""), img, w: t.w || img.width, h: t.h || img.height, url: t.url, slots: t.slots || findSlots(img), overlay: !!t.overlay, filled: [] });
+          }
+          const th = d.theme && typeof d.theme === "object" ? (S.tpls[d.theme.tpl] || {}).id : d.theme;
+          renderTpls(th || "gold");
+          L.els = (d.layout && Array.isArray(d.layout.els)) ? d.layout.els : []; L.below = !!(d.layout && d.layout.below); L.sel = null;
+          const lb = $("#layBelow"); lb.setAttribute("aria-pressed", L.below); lb.textContent = L.below ? "Template below photos" : "Template above photos";
+          syncPanel(); updateSetup();
+          $("#tplNote").textContent = S.tpls.length ? `${S.tpls.length} template${S.tpls.length > 1 ? "s" : ""} imported.` : "";
+          toast("Event imported.");
+        });
+        $("#tap").addEventListener("click", countdown);
+        $("#tap").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); countdown(); } });
+        document.addEventListener("keydown", (e) => { if ($("#booth").classList.contains("is-on") && e.key === " " && e.target === document.body) { e.preventDefault(); countdown(); } });
+        $("#fallbackFile").addEventListener("change", async (e) => {
+          const bmp = await loadFile(e.target.files[0]);
+          if (bmp) { S.fileSrc = bmp; S.useFile = true; updateInfo(); }
+        });
+        $("#boothFile").addEventListener("change", async (e) => {
+          const bmp = await loadFile(e.target.files[0]); e.target.value = "";
+          $("#pick").hidden = true;
+          if (bmp) { S.fileSrc = bmp; updateInfo(); review(bmp); }
+        });
+        $("#pickClose").addEventListener("click", (e) => { e.stopPropagation(); $("#pick").hidden = true; });
+        let toastT = 0;
+        function toast(msg) {
+          let t = $(".x-toast");
+          if (!t) { t = document.createElement("div"); t.className = "x-toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
+          t.textContent = msg; t.hidden = false;
+          clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 2500);
+        }
+        function fsLabel() {
+          const on = !!(document.fullscreenElement || document.webkitFullscreenElement);
+          $$("[data-fs]").forEach((b) => { b.textContent = b.classList.contains("x-ic") ? (on ? "✕" : "⛶") : (on ? "✕ Exit fullscreen" : "⛶ Fullscreen"); b.setAttribute("aria-label", on ? "Exit fullscreen" : "Fullscreen"); });
+        }
+        document.addEventListener("fullscreenchange", fsLabel);
+        document.addEventListener("webkitfullscreenchange", fsLabel);
+
+        /* ---------- template library ---------- */
+        let tplSeq = 0;
+        function findSlots(img) {
+          const k = Math.min(1, 600 / Math.max(img.width, img.height));
+          const w = Math.max(1, Math.round(img.width * k)), h = Math.max(1, Math.round(img.height * k));
+          const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+          const cx = cv.getContext("2d"); cx.drawImage(img, 0, 0, w, h);
+          const a = cx.getImageData(0, 0, w, h).data, seen = new Uint8Array(w * h), slots = [];
+          for (let p = 0; p < w * h; p++) {
+            if (seen[p] || a[p * 4 + 3] >= 20) continue;
+            let n = 0, x0 = w, y0 = h, x1 = 0, y1 = 0;
+            const stack = [p]; seen[p] = 1;
+            while (stack.length) {
+              const q = stack.pop(), x = q % w, y = (q / w) | 0;
+              n++; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+              [x > 0 && q - 1, x < w - 1 && q + 1, y > 0 && q - w, y < h - 1 && q + w].forEach((r) => {
+                if (r !== false && !seen[r] && a[r * 4 + 3] < 20) { seen[r] = 1; stack.push(r); }
+              });
+            }
+            if (n > 0.005 * w * h) slots.push({ x: x0 / w, y: y0 / h, w: (x1 - x0 + 1) / w, h: (y1 - y0 + 1) / h });
+          }
+          return slots.sort((s, t) => (Math.abs(s.y - t.y) > Math.min(s.h, t.h) / 2 ? s.y - t.y : s.x - t.x));
+        }
+        /* paper and orientation from pixel size at 300 DPI: closest within 3%, else Custom */
+        function detect(t) {
+          const s = Math.min(t.w, t.h), l = Math.max(t.w, t.h);
+          let best = null, err = 0.03;
+          Object.entries(PAPERS).forEach(([k, [a, b, u]]) => { const e = Math.max(Math.abs(s / (a * PX[u]) - 1), Math.abs(l / (b * PX[u]) - 1)); if (e <= err) { err = e; best = k; } });
+          $("#paperSel").value = best || "c";
+          if (!best) { setRadio("unit", "in"); $("#cw").value = +(s / DPI).toFixed(2); $("#ch").value = +(l / DPI).toFixed(2); }
+          setRadio("orient", t.w > t.h ? "land" : "port");
+          updateSetup();
+          return paper().label;
+        }
+        function renderTpls(sel) {
+          const cur = sel || val("theme");
+          $("#tplList").hidden = !S.tpls.length;
+          $("#tplList").innerHTML = S.tpls.map((t) => `<label class="x-tpl"><input type="radio" name="theme" value="${t.id}"${t.id === cur ? " checked" : ""} /><span><img src="${t.url}" alt="" /><small>${t.name} · ${t.overlay ? "overlay" : t.slots.length + (t.slots.length > 1 ? " windows" : " window")}</small></span><button class="x-ic x-del" type="button" data-del="${t.id}" aria-label="Delete ${t.name}">✕</button></label>`).join("");
+          if (!document.querySelector('input[name="theme"]:checked')) document.querySelector('input[name="theme"][value="gold"]').checked = true;
+        }
+        function addTpl(t) {
+          t.id = "t" + ++tplSeq; t.filled = []; S.tpls.push(t);
+          renderTpls(t.id);
+          $("#tplNote").textContent = `${t.name}: ${t.w} × ${t.h} px → detected ${detect(t)}, ${t.overlay ? "top overlay" : t.slots.length + " window" + (t.slots.length > 1 ? "s" : "")}. Change Paper to override.`;
+        }
+        function nextPending() {
+          const t = S.pending[0];
+          $("#tplPending").hidden = !t;
+          if (t) $("#tplPendName").textContent = t.name;
+        }
+        $("#tplIn").addEventListener("change", async (e) => {
+          for (const file of e.target.files) {
+            const img = await loadFile(file).catch(() => null);
+            if (!img) continue;
+            const t = { name: file.name.replace(/\.png$/i, "").replace(/[<>&"]/g, ""), img, w: img.width, h: img.height, url: URL.createObjectURL(file), slots: findSlots(img) };
+            if (t.slots.length) addTpl(t); else S.pending.push(t);
+          }
+          e.target.value = ""; nextPending();
+        });
+        $("#tplOverlay").addEventListener("click", () => { const t = S.pending.shift(); t.slots = [{ x: 0, y: 0, w: 1, h: 1 }]; t.overlay = true; addTpl(t); nextPending(); });
+        $("#tplSkip").addEventListener("click", () => { URL.revokeObjectURL(S.pending.shift().url); nextPending(); });
+        $("#tplList").addEventListener("click", (e) => {
+          const b = e.target.closest("[data-del]");
+          if (!b) return;
+          e.preventDefault();
+          const t = S.tpls.find((x) => x.id === b.dataset.del);
+          URL.revokeObjectURL(t.url);
+          S.tpls = S.tpls.filter((x) => x !== t);
+          renderTpls(); updateSetup();
+        });
+        $("#tplList").addEventListener("change", (e) => { const t = S.tpls.find((x) => x.id === e.target.value); if (t) $("#tplNote").textContent = `${t.name}: detected ${detect(t)}.`; });
+        /* ---------- photo layout editor: elements in px at 300 DPI ---------- */
+        const L = { els: [], sel: null, below: false }, layCv = $("#layCv"), FONT0 = 'italic 600 "Playfair Display", Georgia, serif';
+        const isPh = (e) => e.type === "photo";
+        const layNums = () => [...new Set(L.els.filter(isPh).map((e) => +e.n || 1))].sort((a, b) => a - b);
+        function layOn() { return $("#layOn").checked && L.els.some(isPh); }
+        function inBox(ctx, el, fn) {
+          ctx.save(); ctx.translate(el.x + el.w / 2, el.y + el.h / 2); ctx.rotate(((+el.rot || 0) * Math.PI) / 180); ctx.translate(-el.w / 2, -el.h / 2); fn(); ctx.restore();
+        }
+        function drawLayEl(ctx, el, o, srcs, nums, edit) {
+          inBox(ctx, el, () => {
+            if (isPh(el)) {
+              const s = srcs[nums.indexOf(+el.n || 1)];
+              if (s && !edit) return drawPhoto(ctx, s, o, 0, 0, el.w, el.h);
+              ctx.fillStyle = "#cfd3da"; ctx.fillRect(0, 0, el.w, el.h);
+              ctx.fillStyle = "#555"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+              ctx.font = `600 ${Math.max(10, Math.min(el.w, el.h) * 0.3)}px Poppins, sans-serif`; ctx.fillText(el.n, el.w / 2, el.h / 2);
+            } else {
+              const lines = String(el.text).split("\n"), lh = el.size * 1.2;
+              ctx.fillStyle = el.color; ctx.textAlign = "center"; ctx.textBaseline = "middle"; const f = /^((?:italic )?\d+) (.*)$/.exec(el.font) || ["", "400", "sans-serif"]; ctx.font = `${f[1]} ${el.size}px ${f[2]}`;
+              lines.forEach((t, i) => ctx.fillText(t, el.w / 2, el.h / 2 + (i - (lines.length - 1) / 2) * lh));
+            }
+          });
+        }
+        /* template above (default) or below photos; text always follows its own order */
+        function renderLayout(ctx, W, H, o, srcs, edit) {
+          const P = o.paper, nums = layNums(), img = o.tpl && o.tpl.img;
+          ctx.save(); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H); ctx.scale(W / P.w, H / P.h);
+          const tpl = () => img && ctx.drawImage(img, 0, 0, P.w, P.h);
+          if (L.below) { tpl(); L.els.forEach((e) => drawLayEl(ctx, e, o, srcs, nums, edit)); }
+          else { L.els.filter(isPh).forEach((e) => drawLayEl(ctx, e, o, srcs, nums, edit)); tpl(); L.els.filter((e) => !isPh(e)).forEach((e) => drawLayEl(ctx, e, o, srcs, nums, edit)); }
+          ctx.restore();
+        }
+        function drawEd() {
+          const o = opts(), P = o.paper, k = Math.min(1, 900 / Math.max(P.w, P.h)), ctx = layCv.getContext("2d");
+          const w = Math.round(P.w * k), h = Math.round(P.h * k);
+          if (layCv.width !== w || layCv.height !== h) { layCv.width = w; layCv.height = h; }
+          renderLayout(ctx, w, h, o, [], true);
+          const el = L.sel; if (!el) return;
+          const hs = handle();
+          ctx.save(); ctx.scale(k, k);
+          inBox(ctx, el, () => {
+            ctx.strokeStyle = "#F47B20"; ctx.lineWidth = 3 / k; ctx.setLineDash([10 / k, 6 / k]); ctx.strokeRect(0, 0, el.w, el.h);
+            ctx.setLineDash([]); ctx.fillStyle = "#F47B20"; ctx.fillRect(el.w - hs / 2, el.h - hs / 2, hs, hs);
+          });
+          ctx.restore();
+        }
+        const handle = () => 22 * paper().w / (layCv.getBoundingClientRect().width || layCv.width);
+        function syncPanel() {
+          const el = L.sel; $("#layPanel").hidden = !el; if (!el) return;
+          $$("#layPanel [data-for]").forEach((f) => (f.hidden = f.dataset.for !== el.type));
+          $$("#layPanel [data-k]").forEach((i) => { const v = el[i.dataset.k]; if (v !== undefined && document.activeElement !== i) i.value = typeof v === "number" ? Math.round(v) : v; });
+        }
+        function layAdd(el) { el = Object.assign({ x: 60, y: 60, w: 600, h: 600, rot: 0 }, el); L.els.push(el); L.sel = el; syncPanel(); updateSetup(); return el; }
+        function layPreset(boxes) { L.els = L.els.filter((e) => !isPh(e)).concat(boxes.map((b) => Object.assign({ type: "photo", rot: 0, n: 1 }, b))); L.sel = null; syncPanel(); $("#layOn").checked = true; updateSetup(); }
+        $("#layCard").addEventListener("click", (e) => {
+          const b = e.target.closest("[data-lay]"); if (!b) return;
+          const a = b.dataset.lay, P = paper(), m = 60, el = L.sel, i = L.els.indexOf(el);
+          if (a === "photo") layAdd({ type: "photo", n: (layNums().pop() || 0) + 1, w: Math.min(600, P.w - 2 * m), h: Math.min(600, P.h - 2 * m) });
+          else if (a === "text") layAdd({ type: "text", text: $("#nameIn").value.trim() || "Text", size: 90, color: "#1F1F24", font: FONT0, w: P.w - 2 * m, h: 160, y: P.h - 220 });
+          else if (a === "detect") { const t = opts().tpl || S.tpls[S.tpls.length - 1]; if (!t) return toast("Upload a template PNG first."); layPreset(t.slots.map((s, j) => ({ x: s.x * P.w, y: s.y * P.h, w: s.w * P.w, h: s.h * P.h, n: j + 1 }))); }
+          else if (a === "one") layPreset([{ x: m, y: m, w: P.w - 2 * m, h: P.h - 2 * m }]);
+          else if (a === "six") { $("#paperSel").value = "p46"; setRadio("orient", "port"); layPreset([0, 1, 2, 3, 4, 5].map((j) => ({ x: (j % 2) * MAG, y: Math.floor(j / 2) * MAG, w: MAG, h: MAG }))); }
+          else if (a === "strip") { const bh = (P.h - 4 * m) / 3; layPreset([0, 1, 2].map((j) => ({ x: m, y: m + j * (bh + m), w: P.w - 2 * m, h: bh, n: j + 1 }))); }
+          else if (a === "below") { L.below = !L.below; b.setAttribute("aria-pressed", L.below); b.textContent = L.below ? "Template below photos" : "Template above photos"; }
+          else if (!el) return;
+          else if (a === "dup") layAdd(Object.assign({}, el, { x: el.x + 40, y: el.y + 40 }));
+          else if (a === "del") { L.els.splice(i, 1); L.sel = null; syncPanel(); }
+          else if (a === "fwd" && i < L.els.length - 1) L.els.splice(i, 2, L.els[i + 1], el);
+          else if (a === "back" && i > 0) L.els.splice(i - 1, 2, el, L.els[i - 1]);
+          updateSetup();
+        });
+        $("#layPanel").addEventListener("input", (e) => {
+          const k = e.target.dataset.k, el = L.sel; if (!k || !el) return;
+          const v = e.target.value;
+          el[k] = ["text", "color", "font"].includes(k) ? v : k === "n" ? Math.max(1, Math.round(+v) || 1) : k === "w" || k === "h" || k === "size" ? Math.max(8, +v || 8) : +v || 0;
+        });
+        /* pointer: tap selects, drag moves, corner handle resizes (in the element's rotated frame) */
+        let drag = null;
+        const layPt = (e) => { const r = layCv.getBoundingClientRect(), P = paper(); return { x: ((e.clientX - r.left) * P.w) / r.width, y: ((e.clientY - r.top) * P.h) / r.height }; };
+        const local = (el, p) => { const a = (-(+el.rot || 0) * Math.PI) / 180, dx = p.x - el.x - el.w / 2, dy = p.y - el.y - el.h / 2; return { x: dx * Math.cos(a) - dy * Math.sin(a) + el.w / 2, y: dx * Math.sin(a) + dy * Math.cos(a) + el.h / 2 }; };
+        layCv.addEventListener("pointerdown", (e) => {
+          const p = layPt(e), hs = handle();
+          let hit = null, mode = "move";
+          if (L.sel) { const q = local(L.sel, p); if (Math.abs(q.x - L.sel.w) < hs && Math.abs(q.y - L.sel.h) < hs) { hit = L.sel; mode = "size"; } }
+          for (let i = L.els.length - 1; !hit && i >= 0; i--) { const q = local(L.els[i], p); if (q.x >= 0 && q.y >= 0 && q.x <= L.els[i].w && q.y <= L.els[i].h) hit = L.els[i]; }
+          L.sel = hit; syncPanel(); drawEd();
+          if (!hit) return;
+          e.preventDefault(); layCv.setPointerCapture(e.pointerId);
+          drag = { mode, p, x: hit.x, y: hit.y, w: hit.w, h: hit.h };
+        });
+        layCv.addEventListener("pointermove", (e) => {
+          if (!drag || !L.sel) return;
+          const p = layPt(e), dx = p.x - drag.p.x, dy = p.y - drag.p.y, el = L.sel;
+          if (drag.mode === "move") { el.x = drag.x + dx; el.y = drag.y + dy; }
+          else { const a = ((+el.rot || 0) * Math.PI) / 180; el.w = Math.max(20, drag.w + dx * Math.cos(a) + dy * Math.sin(a)); el.h = Math.max(20, drag.h - dx * Math.sin(a) + dy * Math.cos(a)); }
+          syncPanel(); drawEd();
+        });
+        ["pointerup", "pointercancel"].forEach((ev) => layCv.addEventListener(ev, () => { if (drag) { drag = null; updateSetup(); } }));
+
+        $$('input[name="unit"]').forEach((r) => r.addEventListener("change", () => {
+          const f = r.value === "mm" ? 25.4 : 1 / 25.4;
+          ["#cw", "#ch"].forEach((s) => ($(s).value = +($(s).value * f).toFixed(r.value === "mm" ? 0 : 2)));
+        }));
+        ["change", "input"].forEach((ev) => $("#setup").addEventListener(ev, updateSetup));
+        $$("[data-printnow]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); finish(); }));
+        $$("[data-clearsheet]").forEach((b) => b.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const t = opts().tpl;
+          if (t && (!t.filled.length || confirm("Clear every photo from this sheet?"))) { t.filled = []; updateFill(); }
+        }));
+        updateSetup();
+        $("#cMinus").addEventListener("click", () => { S.copies = Math.max(1, S.copies - 1); $("#cVal").textContent = S.copies; });
+        $("#cPlus").addEventListener("click", () => { S.copies = Math.min(6, S.copies + 1); $("#cVal").textContent = S.copies; });
+        $("#retakeBtn").addEventListener("click", () => show("booth"));
+        function keep(print) {
+          const o = opts(), t = o.tpl;
+          let doPrint = false;
+          if (S.next && t) {
+            t.filled.push(S.shot);
+            if (t.filled.length >= t.slots.length) finish(); else updateFill();
+          } else { for (let i = 0; i < S.copies; i++) S.queue.push(S.sheet); doPrint = print || o.autoPrint; }
+          setCount(); show("booth");
+          if (doPrint) printSheet(S.sheet, S.copies);
+        }
+        $("#keepBtn").addEventListener("click", () => keep(false));
+        $("#printNowBtn").addEventListener("click", () => keep(true));
+        $("#qBooth").addEventListener("click", () => show("booth"));
+        $("#qSetup").addEventListener("click", () => show("setup"));
+        $("#qClear").addEventListener("click", () => { if (!S.queue.length || confirm("Clear every sheet from the queue?")) { S.queue = []; renderQueue(); } });
+
+        initCam();
+      })();
+    </script>
+  </body>
+</html>
