@@ -10,9 +10,12 @@ import '../compositor.dart';
 import '../models.dart';
 import '../print_service.dart';
 import '../storage.dart';
+import 'capture_settings_screen.dart';
+import 'layouts_screen.dart';
+import 'print_setup_screen.dart';
 import 'welcome_editor_screen.dart';
 
-enum _Stage { welcome, countdown, review, processing, done }
+enum _Stage { welcome, choose, countdown, review, processing, done }
 
 /// Live guest flow: welcome → countdown → flash → review (retake/keep) → sheet → print.
 /// Operator exit: press and hold the top-left corner for 2 seconds.
@@ -39,6 +42,8 @@ class _BoothScreenState extends State<BoothScreen> {
   DateTime? _cornerDown;
   bool _suppressTap = false;
   int _session = 0; // bumped to cancel a running session
+  final Map<PhotoLayout, Future<Uint8List>> _thumbs = {};
+  int _homeLayout = 0; // operator's active template, restored after each guest session
 
   bool get _live => _alive && mounted;
 
@@ -50,7 +55,8 @@ class _BoothScreenState extends State<BoothScreen> {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     WakelockPlus.enable().catchError((_) {});
     _initCamera();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _toast('Exit booth: press Back, or hold the top-left corner for 2 seconds'));
+    WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _toast('Operator menu (edit / exit): press Back, or hold the top-left corner for 2 seconds'));
   }
 
   Future<void> _initCamera() async {
@@ -88,9 +94,28 @@ class _BoothScreenState extends State<BoothScreen> {
 
   Future<void> _wait(double seconds) => Future.delayed(Duration(milliseconds: (seconds * 1000).round()));
 
-  Future<void> _runSession() async {
+  /// Welcome tapped: let the guest choose a template when there are several.
+  void _onStart() {
     final c = ctl;
     if (_suppressTap || c == null || !c.value.isInitialized || stage != _Stage.welcome) return;
+    _homeLayout = e.activeLayout;
+    if (e.layouts.length > 1) {
+      setState(() => stage = _Stage.choose);
+    } else {
+      _runSession();
+    }
+  }
+
+  void _chooseLayout(int i) {
+    if (stage != _Stage.choose) return;
+    e.activeLayout = i;
+    setState(() => stage = _Stage.welcome);
+    _runSession();
+  }
+
+  Future<void> _runSession() async {
+    final c = ctl;
+    if (c == null || !c.value.isInitialized || stage != _Stage.welcome) return;
     final my = ++_session;
     bool ok() => _live && my == _session;
     final total = e.layout.shotCount;
@@ -182,6 +207,7 @@ class _BoothScreenState extends State<BoothScreen> {
   void _reset() {
     _idleTimer?.cancel();
     if (!_alive) return;
+    if (_homeLayout < e.layouts.length) e.activeLayout = _homeLayout;
     setState(() {
       stage = _Stage.welcome;
       finalSheet = null;
@@ -243,25 +269,129 @@ class _BoothScreenState extends State<BoothScreen> {
         _toast('Wrong PIN');
         return;
       }
-      _session++;
-      Navigator.pop(context);
-      return;
     }
-    final yes = await showDialog<bool>(
+    await _operatorMenu();
+  }
+
+  /// Operator menu: edit the event without leaving the booth.
+  Future<void> _operatorMenu() async {
+    if (!_live) return;
+    if (stage != _Stage.welcome && stage != _Stage.choose && stage != _Stage.done) {
+      _session++; // stop a running session before editing
+      _reset();
+    }
+    final choice = await showModalBottomSheet<String>(
       context: context,
-      builder: (c) => AlertDialog(
-        title: const Text('Exit booth?'),
-        content: const Text('Go back to the event settings.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Stay')),
-          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Exit')),
-        ],
+      backgroundColor: const Color(0xFF26262D),
+      builder: (c) {
+        Widget item(IconData i, String t, String v) =>
+            ListTile(leading: Icon(i, color: brandOrange), title: Text(t), onTap: () => Navigator.pop(c, v));
+        return SafeArea(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Padding(
+              padding: EdgeInsets.all(14),
+              child: Text('OPERATOR', style: TextStyle(letterSpacing: 2, color: Colors.white54)),
+            ),
+            item(Icons.play_arrow, 'Resume booth', 'resume'),
+            item(Icons.waving_hand, 'Edit welcome screen', 'welcome'),
+            item(Icons.dashboard_customize, 'Edit templates', 'layouts'),
+            item(Icons.timer, 'Capture settings', 'capture'),
+            item(Icons.print, 'Print setup', 'print'),
+            item(Icons.logout, 'Exit booth', 'exit'),
+          ]),
+        );
+      },
+    );
+    if (!mounted || !_alive) return;
+    Widget? screen;
+    switch (choice) {
+      case 'welcome':
+        screen = WelcomeEditorScreen(event: e);
+      case 'layouts':
+        screen = LayoutsScreen(event: e);
+      case 'capture':
+        screen = CaptureSettingsScreen(event: e);
+      case 'print':
+        screen = PrintSetupScreen(event: e);
+      case 'exit':
+        _session++;
+        Navigator.pop(context);
+        return;
+    }
+    if (screen == null) return;
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => screen!));
+    await EventStore.instance.save();
+    if (!_live) return;
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    _homeLayout = e.activeLayout;
+    setState(() {
+      _thumbs.clear();
+      stage = _Stage.welcome;
+    });
+  }
+
+  Widget _chooser() {
+    return Container(
+      color: Color(e.welcome.background),
+      child: SafeArea(
+        child: Column(children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+            child: Row(children: [
+              const Expanded(
+                child: Text('Choose your design',
+                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white)),
+              ),
+              TextButton.icon(
+                onPressed: () => setState(() => stage = _Stage.welcome),
+                icon: const Icon(Icons.close, color: Colors.white70),
+                label: const Text('Back', style: TextStyle(color: Colors.white70)),
+              ),
+            ]),
+          ),
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 320, mainAxisSpacing: 16, crossAxisSpacing: 16, childAspectRatio: 0.7),
+              itemCount: e.layouts.length,
+              itemBuilder: (_, i) {
+                final l = e.layouts[i];
+                final thumb = _thumbs.putIfAbsent(
+                    l, () => SheetCompositor.compose(event: e, shots: const [], dpi: 60, layout: l));
+                return GestureDetector(
+                  onTap: () => _chooseLayout(i),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white10,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Color(e.welcome.accent), width: 2),
+                    ),
+                    padding: const EdgeInsets.all(10),
+                    child: Column(children: [
+                      Expanded(
+                        child: FutureBuilder<Uint8List>(
+                          future: thumb,
+                          builder: (_, s) => s.hasData
+                              ? Image.memory(s.data!, fit: BoxFit.contain)
+                              : const Center(child: CircularProgressIndicator()),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(l.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
+                    ]),
+                  ),
+                );
+              },
+            ),
+          ),
+        ]),
       ),
     );
-    if (yes == true && mounted) {
-      _session++;
-      Navigator.pop(context);
-    }
   }
 
   Widget _preview() {
@@ -371,7 +501,9 @@ class _BoothScreenState extends State<BoothScreen> {
   Widget _stageView() {
     switch (stage) {
       case _Stage.welcome:
-        return WelcomeView(s: e.welcome, onStart: _runSession);
+        return WelcomeView(s: e.welcome, onStart: _onStart);
+      case _Stage.choose:
+        return _chooser();
       case _Stage.countdown:
         return Stack(fit: StackFit.expand, children: [
           _preview(),

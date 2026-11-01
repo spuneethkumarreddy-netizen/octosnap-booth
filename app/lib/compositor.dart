@@ -34,8 +34,9 @@ class SheetCompositor {
     required BoothEvent event,
     required List<Uint8List> shots,
     double dpi = 300,
+    PhotoLayout? layout,
   }) async {
-    final layout = event.layout;
+    layout ??= event.layout;
     final wPx = (layout.paper.w * dpi).round();
     final hPx = (layout.paper.h * dpi).round();
     final recorder = ui.PictureRecorder();

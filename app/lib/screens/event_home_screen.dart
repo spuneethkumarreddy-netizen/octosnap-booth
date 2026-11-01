@@ -6,7 +6,7 @@ import 'booth_screen.dart';
 import 'camera_settings_screen.dart';
 import 'gallery_screen.dart';
 import 'capture_settings_screen.dart';
-import 'layout_editor_screen.dart';
+import 'layouts_screen.dart';
 import 'print_setup_screen.dart';
 import 'welcome_editor_screen.dart';
 
@@ -77,8 +77,11 @@ class _EventHomeScreenState extends State<EventHomeScreen> {
           const Text('CUSTOMIZE', style: TextStyle(color: Colors.white54, letterSpacing: 2)),
           const SizedBox(height: 8),
           tile(Icons.waving_hand, 'Welcome screen', e.welcome.title, WelcomeEditorScreen(event: e)),
-          tile(Icons.dashboard_customize, 'Photo layout',
-              '${e.layout.paper.name} · ${e.layout.shotCount} shot(s)', LayoutEditorScreen(event: e)),
+          tile(Icons.dashboard_customize, 'Templates / photo layouts',
+              e.layouts.length > 1
+                  ? '${e.layouts.length} templates · guests choose'
+                  : '${e.layout.paper.name} · ${e.layout.shotCount} shot(s)',
+              LayoutsScreen(event: e)),
           tile(Icons.timer, 'Capture settings',
               'Countdown ${e.capture.firstCountdown}s / ${e.capture.countdown}s', CaptureSettingsScreen(event: e)),
           tile(Icons.photo_camera, 'Camera settings',

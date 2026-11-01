@@ -85,12 +85,13 @@ class LayoutElement {
 }
 
 class PhotoLayout {
+  String name;
   PaperSize paper;
   int background; // ARGB
   String? templatePath; // full-sheet PNG drawn ON TOP of photos (transparent windows)
   List<LayoutElement> elements;
 
-  PhotoLayout({required this.paper, this.background = 0xFFFFFFFF, this.templatePath, List<LayoutElement>? elements})
+  PhotoLayout({this.name = 'Template', required this.paper, this.background = 0xFFFFFFFF, this.templatePath, List<LayoutElement>? elements})
       : elements = elements ?? [];
 
   /// Width/height of the first photo box filled by shot [n] (1-based), or null.
@@ -113,7 +114,10 @@ class PhotoLayout {
     return n == 0 ? 1 : n;
   }
 
+  PhotoLayout copy() => PhotoLayout.fromJson(toJson());
+
   Map<String, dynamic> toJson() => {
+        'name': name,
         'paper': paper.toJson(),
         'background': background,
         'templatePath': templatePath,
@@ -121,6 +125,7 @@ class PhotoLayout {
       };
 
   factory PhotoLayout.fromJson(Map<String, dynamic> j) => PhotoLayout(
+        name: j['name'] as String? ?? 'Template',
         paper: PaperSize.fromJson(j['paper'] as Map<String, dynamic>),
         background: j['background'] as int? ?? 0xFFFFFFFF,
         templatePath: j['templatePath'] as String?,
@@ -318,7 +323,9 @@ class BoothEvent {
   String name;
   DateTime date;
   WelcomeSettings welcome;
-  PhotoLayout layout;
+  /// All templates of this event. When there are several, guests choose one after tapping Start.
+  List<PhotoLayout> layouts;
+  int activeLayout; // the template being edited / used
   CaptureSettings capture;
   CameraSettings camera;
   PrintSettings print;
@@ -329,21 +336,29 @@ class BoothEvent {
     required this.date,
     WelcomeSettings? welcome,
     PhotoLayout? layout,
+    List<PhotoLayout>? layouts,
+    this.activeLayout = 0,
     CaptureSettings? capture,
     CameraSettings? camera,
     PrintSettings? print,
   })  : welcome = welcome ?? WelcomeSettings(),
-        layout = layout ?? PhotoLayout.sixMagnets(),
+        layouts = (layouts != null && layouts.isNotEmpty) ? layouts : [layout ?? PhotoLayout.sixMagnets()],
         capture = capture ?? CaptureSettings(),
         camera = camera ?? CameraSettings(),
-        print = print ?? PrintSettings();
+        print = print ?? PrintSettings() {
+    activeLayout = activeLayout.clamp(0, this.layouts.length - 1);
+  }
+
+  PhotoLayout get layout => layouts[activeLayout.clamp(0, layouts.length - 1)];
+  set layout(PhotoLayout l) => layouts[activeLayout.clamp(0, layouts.length - 1)] = l;
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
         'date': date.toIso8601String(),
         'welcome': welcome.toJson(),
-        'layout': layout.toJson(),
+        'layouts': layouts.map((l) => l.toJson()).toList(),
+        'activeLayout': activeLayout,
         'capture': capture.toJson(),
         'camera': camera.toJson(),
         'print': print.toJson(),
@@ -355,6 +370,8 @@ class BoothEvent {
         date: DateTime.tryParse(j['date'] as String? ?? '') ?? DateTime.now(),
         welcome: WelcomeSettings.fromJson(j['welcome'] as Map<String, dynamic>? ?? {}),
         layout: j['layout'] == null ? null : PhotoLayout.fromJson(j['layout'] as Map<String, dynamic>),
+        layouts: (j['layouts'] as List?)?.map((l) => PhotoLayout.fromJson(l as Map<String, dynamic>)).toList(),
+        activeLayout: j['activeLayout'] as int? ?? 0,
         capture: CaptureSettings.fromJson(j['capture'] as Map<String, dynamic>? ?? {}),
         camera: CameraSettings.fromJson(j['camera'] as Map<String, dynamic>? ?? {}),
         print: PrintSettings.fromJson(j['print'] as Map<String, dynamic>? ?? {}),
