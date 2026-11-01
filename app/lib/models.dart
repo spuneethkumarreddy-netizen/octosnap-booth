@@ -164,7 +164,29 @@ class PhotoLayout {
       );
 }
 
+/// Position (centre, 0..1 of screen), size and colour of one welcome-screen item.
+class WelcomeItem {
+  double x, y, scale;
+  int color;
+  bool visible;
+  WelcomeItem({this.x = 0.5, this.y = 0.5, this.scale = 1, this.color = 0xFFFFFFFF, this.visible = true});
+  Map<String, dynamic> toJson() => {'x': x, 'y': y, 'scale': scale, 'color': color, 'visible': visible};
+  factory WelcomeItem.fromJson(Map<String, dynamic>? j, WelcomeItem d) => j == null
+      ? d
+      : WelcomeItem(
+          x: (j['x'] as num?)?.toDouble() ?? d.x,
+          y: (j['y'] as num?)?.toDouble() ?? d.y,
+          scale: (j['scale'] as num?)?.toDouble() ?? d.scale,
+          color: j['color'] as int? ?? d.color,
+          visible: j['visible'] as bool? ?? d.visible,
+        );
+}
+
 class WelcomeSettings {
+  WelcomeItem titleItem;
+  WelcomeItem subtitleItem;
+  WelcomeItem buttonItem;
+  bool cameraPreview; // live camera behind the welcome text
   String title;
   String subtitle;
   String buttonText;
@@ -178,8 +200,18 @@ class WelcomeSettings {
     this.background = 0xFF1F1F24,
     this.accent = 0xFFF47B20,
     this.backgroundImage,
-  });
+    WelcomeItem? titleItem,
+    WelcomeItem? subtitleItem,
+    WelcomeItem? buttonItem,
+    this.cameraPreview = true,
+  })  : titleItem = titleItem ?? WelcomeItem(y: 0.40),
+        subtitleItem = subtitleItem ?? WelcomeItem(y: 0.50, color: 0xDDFFFFFF),
+        buttonItem = buttonItem ?? WelcomeItem(y: 0.64);
   Map<String, dynamic> toJson() => {
+        'titleItem': titleItem.toJson(),
+        'subtitleItem': subtitleItem.toJson(),
+        'buttonItem': buttonItem.toJson(),
+        'cameraPreview': cameraPreview,
         'title': title,
         'subtitle': subtitle,
         'buttonText': buttonText,
@@ -194,6 +226,10 @@ class WelcomeSettings {
         background: j['background'] as int? ?? 0xFF1F1F24,
         accent: j['accent'] as int? ?? 0xFFF47B20,
         backgroundImage: j['backgroundImage'] as String?,
+        titleItem: WelcomeItem.fromJson(j['titleItem'] as Map<String, dynamic>?, WelcomeItem(y: 0.40)),
+        subtitleItem: WelcomeItem.fromJson(j['subtitleItem'] as Map<String, dynamic>?, WelcomeItem(y: 0.50, color: 0xDDFFFFFF)),
+        buttonItem: WelcomeItem.fromJson(j['buttonItem'] as Map<String, dynamic>?, WelcomeItem(y: 0.64)),
+        cameraPreview: j['cameraPreview'] as bool? ?? true,
       );
 }
 

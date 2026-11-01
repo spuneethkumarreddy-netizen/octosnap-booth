@@ -466,7 +466,7 @@ class _BoothScreenState extends State<BoothScreen> {
     );
   }
 
-  Widget _preview() {
+  Widget _preview({bool guide = true}) {
     final portrait = MediaQuery.of(context).orientation == Orientation.portrait;
     Widget view;
     double ar; // displayed aspect (width/height) before rotation
@@ -495,7 +495,7 @@ class _BoothScreenState extends State<BoothScreen> {
       ),
     );
     final boxAr = e.layout.boxAspectForShot(shotIndex + 1);
-    if (!e.capture.showCropGuide || boxAr == null) return preview;
+    if (!guide || !e.capture.showCropGuide || boxAr == null) return preview;
     return LayoutBuilder(builder: (context, cons) {
       // Displayed preview aspect (width/height) as CameraPreview lays it out.
       final shownAr = e.camera.quarterTurns.isOdd ? 1 / ar : ar;
@@ -583,7 +583,7 @@ class _BoothScreenState extends State<BoothScreen> {
   Widget _stageView() {
     switch (stage) {
       case _Stage.welcome:
-        return WelcomeView(s: e.welcome, onStart: _onStart);
+        return WelcomeView(s: e.welcome, onStart: _onStart, camera: _camReady ? _preview(guide: false) : null);
       case _Stage.choose:
         return _chooser();
       case _Stage.countdown:

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
@@ -22,7 +23,59 @@ class LayoutEditorScreen extends StatefulWidget {
 class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
   LayoutElement? selected;
   bool showTemplate = true;
+  bool panMode = false; // hand tool: pinch/drag the sheet instead of the boxes
+  bool showDetails = false;
+  final _view = TransformationController();
+  final List<String> _undo = [];
+  final List<String> _redo = [];
+  LayoutElement? _textEdited;
   PhotoLayout get layout => widget.event.layout;
+
+  double get _zoom => _view.value.getMaxScaleOnAxis();
+
+  /// Save the current state before a change, so it can be undone.
+  void _push() {
+    _undo.add(jsonEncode(layout.toJson()));
+    if (_undo.length > 60) _undo.removeAt(0);
+    _redo.clear();
+  }
+
+  void _restore(String json) {
+    final l = PhotoLayout.fromJson(jsonDecode(json) as Map<String, dynamic>);
+    final idx = selected == null ? -1 : layout.elements.indexOf(selected!);
+    setState(() {
+      layout.paper = l.paper;
+      layout.background = l.background;
+      layout.templatePath = l.templatePath;
+      layout.elements
+        ..clear()
+        ..addAll(l.elements);
+      selected = idx >= 0 && idx < layout.elements.length ? layout.elements[idx] : null;
+      _textEdited = null;
+    });
+  }
+
+  void _doUndo() {
+    if (_undo.isEmpty) return;
+    _redo.add(jsonEncode(layout.toJson()));
+    _restore(_undo.removeLast());
+  }
+
+  void _doRedo() {
+    if (_redo.isEmpty) return;
+    _undo.add(jsonEncode(layout.toJson()));
+    _restore(_redo.removeLast());
+  }
+
+  void _nudge(double dx, double dy) {
+    final e = selected;
+    if (e == null) return;
+    _push();
+    setState(() {
+      e.x = _snap(e.x + dx);
+      e.y = _snap(e.y + dy);
+    });
+  }
 
   double _snap(double v) => (v * 20).roundToDouble() / 20; // 0.05 inch grid
 
@@ -37,6 +90,7 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
       h: t == ElementType.text ? 0.6 : 2,
       photoNumber: t == ElementType.photo ? nextNum : 1,
     );
+    _push();
     setState(() {
       layout.elements.add(e);
       selected = e;
@@ -49,6 +103,7 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
     if (path == null) return;
     final saved = await EventStore.instance.importAsset(path);
     final e = LayoutElement(type: ElementType.image, x: 0.25, y: 0.25, w: 1.5, h: 1, imagePath: saved);
+    _push();
     setState(() {
       layout.elements.add(e);
       selected = e;
@@ -75,6 +130,7 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
     final bytes = await File(saved).readAsBytes();
     final codec = await ui.instantiateImageCodec(bytes);
     final img = (await codec.getNextFrame()).image;
+    _push();
     setState(() {
       layout.templatePath = saved;
       final tplLandscape = img.width > img.height;
@@ -107,11 +163,13 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
     );
     final wv = double.tryParse(w.text), hv = double.tryParse(h.text);
     if (ok == true && wv != null && hv != null && wv > 0 && hv > 0) {
+      _push();
       setState(() => layout.paper = PaperSize('Custom', wv, hv));
     }
   }
 
   void _applyPreset(PhotoLayout p) {
+    _push();
     setState(() {
       layout.paper = p.paper;
       layout.elements
@@ -163,10 +221,17 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
   // ---------- canvas ----------
   Widget _canvas(BoxConstraints c) {
     final paper = layout.paper;
-    final scale = math.min((c.maxWidth - 32) / paper.w, (c.maxHeight - 32) / paper.h);
+    final scale = math.min((c.maxWidth - 24) / paper.w, (c.maxHeight - 24) / paper.h);
     final sheetW = paper.w * scale, sheetH = paper.h * scale;
-    return Center(
-      child: GestureDetector(
+    return InteractiveViewer(
+      transformationController: _view,
+      minScale: 1,
+      maxScale: 8,
+      panEnabled: panMode,
+      scaleEnabled: true,
+      onInteractionEnd: (_) => setState(() {}),
+      child: SizedBox(width: c.maxWidth, height: c.maxHeight, child: Center(
+      child: IgnorePointer(ignoring: panMode, child: GestureDetector(
         onTap: () => setState(() => selected = null),
         child: Container(
           width: sheetW,
@@ -185,6 +250,7 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
             if (selected != null && layout.elements.contains(selected)) _handles(selected!, scale),
           ]),
         ),
+      ))),
       ),
     );
   }
@@ -232,10 +298,13 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
         angle: e.rotation * math.pi / 180,
         child: GestureDetector(
           onTap: () => setState(() => selected = e),
-          onPanStart: (_) => setState(() => selected = e),
+          onPanStart: (_) {
+            _push();
+            setState(() => selected = e);
+          },
           onPanUpdate: (d) => setState(() {
-            e.x += d.delta.dx / scale;
-            e.y += d.delta.dy / scale;
+            e.x += d.delta.dx / scale / _zoom;
+            e.y += d.delta.dy / scale / _zoom;
           }),
           onPanEnd: (_) => setState(() {
             e.x = _snap(e.x);
@@ -248,7 +317,7 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
   }
 
   Widget _handles(LayoutElement e, double scale) {
-    const hs = 22.0;
+    const hs = 30.0;
     return Positioned(
       left: e.x * scale,
       top: e.y * scale,
@@ -266,9 +335,10 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
+              onPanStart: (_) => _push(),
               onPanUpdate: (d) => setState(() {
-                e.x += d.delta.dx / scale;
-                e.y += d.delta.dy / scale;
+                e.x += d.delta.dx / scale / _zoom;
+                e.y += d.delta.dy / scale / _zoom;
               }),
               onPanEnd: (_) => setState(() {
                 e.x = _snap(e.x);
@@ -280,9 +350,10 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
             right: -hs / 2,
             bottom: -hs / 2,
             child: GestureDetector(
+              onPanStart: (_) => _push(),
               onPanUpdate: (d) => setState(() {
-                e.w = math.max(0.2, e.w + d.delta.dx / scale);
-                e.h = math.max(0.2, e.h + d.delta.dy / scale);
+                e.w = math.max(0.2, e.w + d.delta.dx / scale / _zoom);
+                e.h = math.max(0.2, e.h + d.delta.dy / scale / _zoom);
               }),
               onPanEnd: (_) => setState(() {
                 e.w = _snap(e.w);
@@ -293,7 +364,7 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
                 height: hs,
                 decoration: BoxDecoration(
                     color: brandOrange, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
-                child: const Icon(Icons.open_in_full, size: 12, color: Colors.white),
+                child: const Icon(Icons.open_in_full, size: 16, color: Colors.white),
               ),
             ),
           ),
@@ -313,9 +384,60 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
         keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
         onFieldSubmitted: (v) {
           final d = double.tryParse(v);
-          if (d != null) setState(() => onChanged(d));
+          if (d != null) {
+            _push();
+            setState(() => onChanged(d));
+          }
         },
       ),
+    );
+  }
+
+  Widget _quickBar() {
+    final e = selected;
+    if (e == null || !layout.elements.contains(e)) {
+      return const Padding(
+        padding: EdgeInsets.all(10),
+        child: Text('Box ni tap chesi select cheyyandi. Pinch = zoom, ✋ = move sheet.',
+            style: TextStyle(color: Colors.white60, fontSize: 12)),
+      );
+    }
+    const step = 0.05;
+    Widget b(IconData i, VoidCallback f, [String? tip]) =>
+        IconButton(visualDensity: VisualDensity.compact, tooltip: tip, onPressed: f, icon: Icon(i));
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(children: [
+        b(Icons.arrow_back, () => _nudge(-step, 0), 'Left'),
+        b(Icons.arrow_upward, () => _nudge(0, -step), 'Up'),
+        b(Icons.arrow_downward, () => _nudge(0, step), 'Down'),
+        b(Icons.arrow_forward, () => _nudge(step, 0), 'Right'),
+        b(Icons.zoom_out_map, () => _act(() {
+              e.w = _snap(e.w * 1.05);
+              e.h = _snap(e.h * 1.05);
+            }), 'Bigger'),
+        b(Icons.zoom_in_map, () => _act(() {
+              e.w = math.max(0.2, _snap(e.w / 1.05));
+              e.h = math.max(0.2, _snap(e.h / 1.05));
+            }), 'Smaller'),
+        b(Icons.copy, () => _act(() {
+              final c = e.copy()
+                ..x = e.x + 0.2
+                ..y = e.y + 0.2;
+              layout.elements.add(c);
+              selected = c;
+            }), 'Duplicate'),
+        b(Icons.delete_outline, () => _act(() {
+              layout.elements.remove(e);
+              selected = null;
+            }), 'Delete'),
+        TextButton.icon(
+          onPressed: () => setState(() => showDetails = !showDetails),
+          icon: Icon(showDetails ? Icons.expand_more : Icons.tune),
+          label: Text(showDetails ? 'Hide' : 'More'),
+        ),
+      ]),
     );
   }
 
@@ -345,29 +467,35 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
           Row(children: [
             const Text('Photo #'),
             IconButton(
-                onPressed: e.photoNumber > 1 ? () => setState(() => e.photoNumber--) : null,
+                onPressed: e.photoNumber > 1 ? () { _push(); setState(() => e.photoNumber--); } : null,
                 icon: const Icon(Icons.remove_circle_outline)),
             Text('${e.photoNumber}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-            IconButton(onPressed: () => setState(() => e.photoNumber++), icon: const Icon(Icons.add_circle_outline)),
+            IconButton(onPressed: () { _push(); setState(() => e.photoNumber++); }, icon: const Icon(Icons.add_circle_outline)),
           ]),
         if (e.type == ElementType.text) ...[
           TextFormField(
             key: ValueKey('txt-${identityHashCode(e)}'),
             initialValue: e.text,
             decoration: const InputDecoration(labelText: 'Text ({event}, {date} allowed)'),
-            onChanged: (v) => setState(() => e.text = v),
+            onChanged: (v) {
+              if (_textEdited != e) {
+                _push();
+                _textEdited = e;
+              }
+              setState(() => e.text = v);
+            },
           ),
           Row(children: [
             const Text('Size'),
             Expanded(
-              child: Slider(min: 6, max: 96, value: e.fontSize.clamp(6, 96), onChanged: (v) => setState(() => e.fontSize = v)),
+              child: Slider(min: 6, max: 96, value: e.fontSize.clamp(6, 96), onChangeStart: (_) => _push(), onChanged: (v) => setState(() => e.fontSize = v)),
             ),
             Text('${e.fontSize.round()}pt'),
           ]),
           Wrap(spacing: 6, children: [
             for (final c in [0xFF1F1F24, 0xFFFFFFFF, 0xFFF47B20, 0xFF000000, 0xFFE63946, 0xFF0F4C81])
               GestureDetector(
-                onTap: () => setState(() => e.color = c),
+                onTap: () { _push(); setState(() => e.color = c); },
                 child: CircleAvatar(
                     radius: 14,
                     backgroundColor: e.color == c ? brandOrange : Colors.white24,
@@ -378,7 +506,7 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
         const SizedBox(height: 8),
         Wrap(spacing: 8, children: [
           OutlinedButton.icon(
-            onPressed: () => setState(() {
+            onPressed: () => _act(() {
               final c = e.copy()
                 ..x = e.x + 0.2
                 ..y = e.y + 0.2;
@@ -389,7 +517,7 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
             label: const Text('Duplicate'),
           ),
           OutlinedButton.icon(
-            onPressed: () => setState(() {
+            onPressed: () => _act(() {
               layout.elements.remove(e);
               layout.elements.add(e);
             }),
@@ -397,7 +525,7 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
             label: const Text('Front'),
           ),
           OutlinedButton.icon(
-            onPressed: () => setState(() {
+            onPressed: () => _act(() {
               layout.elements.remove(e);
               layout.elements.insert(0, e);
             }),
@@ -406,7 +534,7 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
           ),
           FilledButton.icon(
             style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
-            onPressed: () => setState(() {
+            onPressed: () => _act(() {
               layout.elements.remove(e);
               selected = null;
             }),
@@ -418,22 +546,28 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
     );
   }
 
+  void _act(VoidCallback f) {
+    _push();
+    setState(f);
+  }
+
   Widget _toolbar() {
     final isPreset = PaperSize.presets.any((p) => p.name == layout.paper.name && p.w == layout.paper.w && p.h == layout.paper.h);
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Row(spacing: 8, children: [
         DropdownButton<String>(
           value: isPreset ? layout.paper.name : 'Custom',
           items: [
-            ...PaperSize.presets.map((p) => DropdownMenuItem(value: p.name, child: Text('Paper ${p.name}'))),
+            ...PaperSize.presets.map((p) => DropdownMenuItem(value: p.name, child: Text(p.name))),
             const DropdownMenuItem(value: 'Custom', child: Text('Custom…')),
           ],
           onChanged: (v) {
             if (v == 'Custom') {
               _customPaper();
             } else {
-              setState(() => layout.paper = PaperSize.presets.firstWhere((p) => p.name == v));
+              _act(() => layout.paper = PaperSize.presets.firstWhere((p) => p.name == v));
             }
           },
         ),
@@ -454,15 +588,15 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
         ActionChip(avatar: const Icon(Icons.add_a_photo, size: 18), label: const Text('Photo box'), onPressed: () => _add(ElementType.photo)),
         ActionChip(avatar: const Icon(Icons.text_fields, size: 18), label: const Text('Text'), onPressed: () => _add(ElementType.text)),
         ActionChip(avatar: const Icon(Icons.image, size: 18), label: const Text('Logo'), onPressed: _addLogo),
-        ActionChip(avatar: const Icon(Icons.layers, size: 18), label: const Text('Import template PNG'), onPressed: _importTemplate),
+        ActionChip(avatar: const Icon(Icons.layers, size: 18), label: const Text('Template PNG'), onPressed: _importTemplate),
         if (layout.templatePath != null) ...[
-          FilterChip(label: const Text('Show template'), selected: showTemplate, onSelected: (v) => setState(() => showTemplate = v)),
-          ActionChip(label: const Text('Remove template'), onPressed: () => setState(() => layout.templatePath = null)),
+          FilterChip(label: const Text('Show PNG'), selected: showTemplate, onSelected: (v) => setState(() => showTemplate = v)),
+          ActionChip(label: const Text('Remove PNG'), onPressed: () => _act(() => layout.templatePath = null)),
         ],
         ActionChip(
           avatar: const Icon(Icons.format_color_fill, size: 18),
           label: const Text('Background'),
-          onPressed: () => setState(() {
+          onPressed: () => _act(() {
             const cycle = [0xFFFFFFFF, 0xFF1F1F24, 0xFFF47B20, 0xFF000000];
             layout.background = cycle[(cycle.indexOf(layout.background) + 1) % cycle.length];
           }),
@@ -472,12 +606,32 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
   }
 
   @override
+  void dispose() {
+    _view.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Photo layout · ${layout.paper.name} (${layout.paper.w}" x ${layout.paper.h}")'),
+        title: Text('${layout.paper.name} (${layout.paper.w}" x ${layout.paper.h}")'),
         actions: [
-          TextButton.icon(onPressed: _previewSheet, icon: const Icon(Icons.visibility), label: const Text('Preview 300 DPI')),
+          IconButton(tooltip: 'Undo', onPressed: _undo.isEmpty ? null : _doUndo, icon: const Icon(Icons.undo)),
+          IconButton(tooltip: 'Redo', onPressed: _redo.isEmpty ? null : _doRedo, icon: const Icon(Icons.redo)),
+          IconButton(
+            tooltip: 'Move / zoom sheet',
+            isSelected: panMode,
+            onPressed: () => setState(() => panMode = !panMode),
+            icon: const Icon(Icons.pan_tool_outlined),
+            selectedIcon: const Icon(Icons.pan_tool, color: brandOrange),
+          ),
+          IconButton(
+            tooltip: 'Fit',
+            onPressed: () => setState(() => _view.value = Matrix4.identity()),
+            icon: const Icon(Icons.fit_screen),
+          ),
+          IconButton(tooltip: 'Preview 300 DPI', onPressed: _previewSheet, icon: const Icon(Icons.visibility)),
         ],
       ),
       body: LayoutBuilder(builder: (context, c) {
@@ -487,17 +641,20 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
             Expanded(child: LayoutBuilder(builder: (_, cc) => _canvas(cc))),
             SizedBox(
               width: 400,
-              child: ListView(children: [_toolbar(), const Divider(), _props()]),
+              child: ListView(children: [_toolbar(), const Divider(), _quickBar(), _props()]),
             ),
           ]);
         }
         return Column(children: [
           _toolbar(),
-          Expanded(child: LayoutBuilder(builder: (_, cc) => _canvas(cc))),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: c.maxHeight * 0.38),
-            child: SingleChildScrollView(child: _props()),
-          ),
+          Expanded(child: ClipRect(child: LayoutBuilder(builder: (_, cc) => _canvas(cc)))),
+          const Divider(height: 1),
+          _quickBar(),
+          if (showDetails && selected != null)
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: c.maxHeight * 0.35),
+              child: SingleChildScrollView(child: _props()),
+            ),
         ]);
       }),
     );
