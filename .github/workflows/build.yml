@@ -1,0 +1,105 @@
+name: Build OctoSnap Booth
+
+on:
+  push:
+    branches: [main]
+    paths: ['app/**', 'app-src.tar.gz', '.github/workflows/build.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FLUTTER_VERSION: '3.47.9'
+
+jobs:
+  # One-time unpack: if app-src.tar.gz was uploaded through the GitHub website,
+  # extract it into app/ and commit the real source files.
+  unpack:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: commit
+        run: |
+          if [ -f app-src.tar.gz ]; then
+            rm -rf app && tar xzf app-src.tar.gz && git rm -q app-src.tar.gz
+            git config user.name "octosnap-ci"
+            git config user.email "octosnap-ci@users.noreply.github.com"
+            git add -A app && git commit -m "Unpack app source from app-src.tar.gz" && git push
+          fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  android:
+    needs: unpack
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.unpack.outputs.sha }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - run: flutter build apk --release
+      - run: cp build/app/outputs/flutter-apk/app-release.apk OctoSnapBooth-${{ github.run_number }}.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OctoSnapBooth-android
+          path: app/OctoSnapBooth-${{ github.run_number }}.apk
+
+  windows:
+    needs: unpack
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.unpack.outputs.sha }}
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath OctoSnapBooth-windows-${{ github.run_number }}.zip
+        shell: pwsh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OctoSnapBooth-windows
+          path: app/OctoSnapBooth-windows-${{ github.run_number }}.zip
+
+  release:
+    needs: [unpack, android, windows]
+    if: always() && needs.android.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: OctoSnap Booth build ${{ github.run_number }}
+          target_commitish: ${{ needs.unpack.outputs.sha }}
+          body: |
+            Android: download the .apk on the booth phone/tablet and install it (allow "Install unknown apps").
+            Windows: download the .zip, extract, run octosnap_booth.exe.
+          files: dist/*
+          make_latest: true
