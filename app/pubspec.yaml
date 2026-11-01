@@ -39,6 +39,7 @@ dependencies:
   pdf: ^3.13.1
   path_provider: ^2.1.6
   file_picker: ^13.3.0
+  wakelock_plus: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

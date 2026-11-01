@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../compositor.dart';
 import '../models.dart';
@@ -47,6 +48,7 @@ class _BoothScreenState extends State<BoothScreen> {
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    WakelockPlus.enable().catchError((_) {});
     _initCamera();
     WidgetsBinding.instance.addPostFrameCallback((_) => _toast('Exit booth: press Back, or hold the top-left corner for 2 seconds'));
   }
@@ -79,6 +81,7 @@ class _BoothScreenState extends State<BoothScreen> {
     _exitTimer?.cancel();
     _idleTimer?.cancel();
     ctl?.dispose();
+    WakelockPlus.disable().catchError((_) {});
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }
@@ -98,6 +101,7 @@ class _BoothScreenState extends State<BoothScreen> {
       setState(() => stage = _Stage.countdown);
       for (countdown = secs; countdown > 0 && ok(); countdown--) {
         setState(() {});
+        if (e.capture.sounds) SystemSound.play(SystemSoundType.click);
         await _wait(1);
       }
       if (!ok()) return;
@@ -106,6 +110,10 @@ class _BoothScreenState extends State<BoothScreen> {
       Uint8List bytes;
       try {
         setState(() => flash = true);
+        if (e.capture.sounds) {
+          SystemSound.play(SystemSoundType.click);
+          HapticFeedback.mediumImpact();
+        }
         final file = await c.takePicture();
         bytes = await file.readAsBytes();
       } catch (err) {
@@ -209,6 +217,36 @@ class _BoothScreenState extends State<BoothScreen> {
   }
 
   Future<void> _confirmExit() async {
+    final pin = e.capture.exitPin;
+    if (pin.isNotEmpty) {
+      final ctl = TextEditingController();
+      final entered = await showDialog<String>(
+        context: context,
+        builder: (c) => AlertDialog(
+          title: const Text('Operator PIN'),
+          content: TextField(
+            controller: ctl,
+            autofocus: true,
+            obscureText: true,
+            keyboardType: TextInputType.number,
+            maxLength: 6,
+            onSubmitted: (v) => Navigator.pop(c, v),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(c, ctl.text), child: const Text('Exit booth')),
+          ],
+        ),
+      );
+      if (entered == null || !mounted) return;
+      if (entered.trim() != pin) {
+        _toast('Wrong PIN');
+        return;
+      }
+      _session++;
+      Navigator.pop(context);
+      return;
+    }
     final yes = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
@@ -232,7 +270,7 @@ class _BoothScreenState extends State<BoothScreen> {
       return Center(child: Text('Camera problem: $cameraError', style: const TextStyle(color: Colors.white)));
     }
     if (c == null || !c.value.isInitialized) return const Center(child: CircularProgressIndicator());
-    return Center(
+    final preview = Center(
       child: RotatedBox(
         quarterTurns: e.camera.quarterTurns,
         child: Transform(
@@ -242,6 +280,30 @@ class _BoothScreenState extends State<BoothScreen> {
         ),
       ),
     );
+    final boxAr = e.layout.boxAspectForShot(shotIndex + 1);
+    if (!e.capture.showCropGuide || boxAr == null) return preview;
+    return LayoutBuilder(builder: (context, cons) {
+      // Displayed preview aspect (width/height) as CameraPreview lays it out.
+      final portrait = MediaQuery.of(context).orientation == Orientation.portrait;
+      var ar = portrait ? 1 / c.value.aspectRatio : c.value.aspectRatio;
+      if (e.camera.quarterTurns.isOdd) ar = 1 / ar;
+      final pr = _fit(ar, cons.maxWidth, cons.maxHeight);
+      final guide = _fit(boxAr, pr.width, pr.height).shift(pr.topLeft);
+      return Stack(fit: StackFit.expand, children: [
+        preview,
+        IgnorePointer(child: CustomPaint(painter: _CropGuidePainter(guide))),
+      ]);
+    });
+  }
+
+  /// Largest centred rect of aspect [ar] inside a [w] x [h] area.
+  static Rect _fit(double ar, double w, double h) {
+    var rw = w, rh = w / ar;
+    if (rh > h) {
+      rh = h;
+      rw = h * ar;
+    }
+    return Rect.fromLTWH((w - rw) / 2, (h - rh) / 2, rw, rh);
   }
 
   Widget _big(String t, {double size = 180}) => Text(t,
@@ -419,4 +481,28 @@ class _BoothScreenState extends State<BoothScreen> {
       ),
     );
   }
+}
+
+
+/// Darkens everything outside [guide] and outlines it in brand orange.
+class _CropGuidePainter extends CustomPainter {
+  final Rect guide;
+  _CropGuidePainter(this.guide);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final outside = Path()
+      ..fillType = PathFillType.evenOdd
+      ..addRect(Offset.zero & size)
+      ..addRect(guide);
+    canvas.drawPath(outside, Paint()..color = const Color(0x99000000));
+    canvas.drawRect(
+        guide,
+        Paint()
+          ..color = brandOrange
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3);
+  }
+
+  @override
+  bool shouldRepaint(_CropGuidePainter old) => old.guide != guide;
 }

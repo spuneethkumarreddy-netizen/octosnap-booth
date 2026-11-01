@@ -93,6 +93,17 @@ class PhotoLayout {
   PhotoLayout({required this.paper, this.background = 0xFFFFFFFF, this.templatePath, List<LayoutElement>? elements})
       : elements = elements ?? [];
 
+  /// Width/height of the first photo box filled by shot [n] (1-based), or null.
+  double? boxAspectForShot(int n) {
+    for (final e in elements) {
+      if (e.type == ElementType.photo && e.photoNumber == n && e.h > 0) {
+        final turned = (e.rotation.abs() % 180 - 90).abs() < 1;
+        return turned ? e.h / e.w : e.w / e.h;
+      }
+    }
+    return null;
+  }
+
   /// Number of shots the booth must take = highest photo number used.
   int get shotCount {
     var n = 0;
@@ -188,7 +199,13 @@ class CaptureSettings {
   double delayBetween; // pause between shots
   bool allowRetake;
   int finalDisplaySeconds; // how long the final sheet stays before returning to welcome
+  bool showCropGuide; // darken the area outside the photo box during countdown
+  bool sounds; // countdown ticks + shutter click
+  String exitPin; // operator PIN to leave the booth ('' = no PIN)
   CaptureSettings({
+    this.showCropGuide = true,
+    this.sounds = true,
+    this.exitPin = '',
     this.firstCountdown = 5,
     this.countdown = 3,
     this.displaySeconds = 2,
@@ -203,6 +220,9 @@ class CaptureSettings {
         'delayBetween': delayBetween,
         'allowRetake': allowRetake,
         'finalDisplaySeconds': finalDisplaySeconds,
+        'showCropGuide': showCropGuide,
+        'sounds': sounds,
+        'exitPin': exitPin,
       };
   factory CaptureSettings.fromJson(Map<String, dynamic> j) => CaptureSettings(
         firstCountdown: j['firstCountdown'] as int? ?? 5,
@@ -211,6 +231,9 @@ class CaptureSettings {
         delayBetween: (j['delayBetween'] as num? ?? 1).toDouble(),
         allowRetake: j['allowRetake'] as bool? ?? true,
         finalDisplaySeconds: j['finalDisplaySeconds'] as int? ?? 10,
+        showCropGuide: j['showCropGuide'] as bool? ?? true,
+        sounds: j['sounds'] as bool? ?? true,
+        exitPin: j['exitPin'] as String? ?? '',
       );
 }
 
@@ -251,13 +274,31 @@ class PrintSettings {
   String? printerUrl; // desktop direct printing
   String? printerName;
   bool twoPerPage; // e.g. two 2x6 strips on one 4x6
-  PrintSettings({this.autoPrint = false, this.copies = 1, this.printerUrl, this.printerName, this.twoPerPage = false});
+  bool cutMarks; // edge ticks at every photo-box edge, for cutting magnets
+  double offsetXmm; // printer calibration: + moves the print right
+  double offsetYmm; // printer calibration: + moves the print down
+  double scalePct; // printer calibration: 100 = exact size
+  PrintSettings({
+    this.autoPrint = false,
+    this.copies = 1,
+    this.printerUrl,
+    this.printerName,
+    this.twoPerPage = false,
+    this.cutMarks = false,
+    this.offsetXmm = 0,
+    this.offsetYmm = 0,
+    this.scalePct = 100,
+  });
   Map<String, dynamic> toJson() => {
         'autoPrint': autoPrint,
         'copies': copies,
         'printerUrl': printerUrl,
         'printerName': printerName,
         'twoPerPage': twoPerPage,
+        'cutMarks': cutMarks,
+        'offsetXmm': offsetXmm,
+        'offsetYmm': offsetYmm,
+        'scalePct': scalePct,
       };
   factory PrintSettings.fromJson(Map<String, dynamic> j) => PrintSettings(
         autoPrint: j['autoPrint'] as bool? ?? false,
@@ -265,6 +306,10 @@ class PrintSettings {
         printerUrl: j['printerUrl'] as String?,
         printerName: j['printerName'] as String?,
         twoPerPage: j['twoPerPage'] as bool? ?? false,
+        cutMarks: j['cutMarks'] as bool? ?? false,
+        offsetXmm: (j['offsetXmm'] as num? ?? 0).toDouble(),
+        offsetYmm: (j['offsetYmm'] as num? ?? 0).toDouble(),
+        scalePct: (j['scalePct'] as num? ?? 100).toDouble(),
       );
 }
 

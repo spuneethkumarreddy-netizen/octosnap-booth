@@ -20,6 +20,25 @@ class _CaptureSettingsScreenState extends State<CaptureSettingsScreen> {
             style: const TextStyle(fontWeight: FontWeight.w700, color: brandOrange)),
       );
 
+  Future<void> _setPin() async {
+    final ctl = TextEditingController(text: s.exitPin);
+    final pin = await showDialog<String>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Exit PIN'),
+        content: TextField(
+          controller: ctl,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          maxLength: 6,
+          decoration: const InputDecoration(hintText: '4–6 digits, empty = no PIN'),
+        ),
+        actions: [FilledButton(onPressed: () => Navigator.pop(c, ctl.text.trim()), child: const Text('Save'))],
+      ),
+    );
+    if (pin != null) setState(() => s.exitPin = pin.replaceAll(RegExp(r'[^0-9]'), ''));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,6 +60,25 @@ class _CaptureSettingsScreenState extends State<CaptureSettingsScreen> {
           subtitle: const Text('Guest can Retake or Keep each photo'),
           value: s.allowRetake,
           onChanged: (v) => setState(() => s.allowRetake = v),
+        ),
+        SwitchListTile(
+          title: const Text('Crop guide on live view'),
+          subtitle: const Text('Darkens what will be cut off, so guests stand inside the magnet'),
+          value: s.showCropGuide,
+          onChanged: (v) => setState(() => s.showCropGuide = v),
+        ),
+        SwitchListTile(
+          title: const Text('Sounds'),
+          subtitle: const Text('Countdown ticks and shutter click'),
+          value: s.sounds,
+          onChanged: (v) => setState(() => s.sounds = v),
+        ),
+        const Divider(),
+        ListTile(
+          leading: const Icon(Icons.lock, color: brandOrange),
+          title: const Text('Operator exit PIN'),
+          subtitle: Text(s.exitPin.isEmpty ? 'Off: anyone can exit the booth' : 'On: PIN needed to exit the booth'),
+          trailing: TextButton(onPressed: _setPin, child: Text(s.exitPin.isEmpty ? 'Set' : 'Change')),
         ),
       ]),
     );

@@ -4,6 +4,7 @@ import '../models.dart';
 import '../storage.dart';
 import 'booth_screen.dart';
 import 'camera_settings_screen.dart';
+import 'gallery_screen.dart';
 import 'capture_settings_screen.dart';
 import 'layout_editor_screen.dart';
 import 'print_setup_screen.dart';
@@ -70,7 +71,9 @@ class _EventHomeScreenState extends State<EventHomeScreen> {
               label: const Text('LAUNCH BOOTH', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
+          tile(Icons.photo_library, 'Gallery', 'View, reprint and share this event\'s photos', GalleryScreen(event: e)),
+          const SizedBox(height: 12),
           const Text('CUSTOMIZE', style: TextStyle(color: Colors.white54, letterSpacing: 2)),
           const SizedBox(height: 8),
           tile(Icons.waving_hand, 'Welcome screen', e.welcome.title, WelcomeEditorScreen(event: e)),

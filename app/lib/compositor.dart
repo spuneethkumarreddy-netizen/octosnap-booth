@@ -78,8 +78,74 @@ class SheetCompositor {
       );
     }
 
+    if (event.print.cutMarks) _drawCutMarks(canvas, layout, dpi, wPx.toDouble(), hPx.toDouble());
+
     final picture = recorder.endRecording();
     final image = await picture.toImage(wPx, hPx);
+    final data = await image.toByteData(format: ui.ImageByteFormat.png);
+    return data!.buffer.asUint8List();
+  }
+
+  /// Short ticks on the sheet edges at every photo-box edge, so magnets can be cut straight.
+  static void _drawCutMarks(Canvas canvas, PhotoLayout layout, double dpi, double w, double h) {
+    final xs = <double>{}, ys = <double>{};
+    for (final e in layout.elements) {
+      if (e.type != ElementType.photo) continue;
+      xs..add(e.x * dpi)..add((e.x + e.w) * dpi);
+      ys..add(e.y * dpi)..add((e.y + e.h) * dpi);
+    }
+    final len = 0.12 * dpi;
+    final paint = Paint()
+      ..color = const Color(0xFF555555)
+      ..strokeWidth = math.max(1, dpi / 150);
+    for (final x in xs) {
+      if (x <= 1 || x >= w - 1) continue;
+      canvas.drawLine(Offset(x, 0), Offset(x, len), paint);
+      canvas.drawLine(Offset(x, h - len), Offset(x, h), paint);
+    }
+    for (final y in ys) {
+      if (y <= 1 || y >= h - 1) continue;
+      canvas.drawLine(Offset(0, y), Offset(len, y), paint);
+      canvas.drawLine(Offset(w - len, y), Offset(w, y), paint);
+    }
+  }
+
+  /// Printer calibration sheet: a border 3 mm inside the paper edge, centre cross and mm rulers.
+  static Future<Uint8List> calibrationSheet(PaperSize paper, {double dpi = 300}) async {
+    final wPx = (paper.w * dpi).round(), hPx = (paper.h * dpi).round();
+    final w = wPx.toDouble(), h = hPx.toDouble();
+    final mm = dpi / 25.4;
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, w, h));
+    canvas.drawRect(Rect.fromLTWH(0, 0, w, h), Paint()..color = Colors.white);
+    final line = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    canvas.drawRect(Rect.fromLTWH(3 * mm, 3 * mm, w - 6 * mm, h - 6 * mm), line);
+    canvas.drawLine(Offset(w / 2, h / 2 - 10 * mm), Offset(w / 2, h / 2 + 10 * mm), line);
+    canvas.drawLine(Offset(w / 2 - 10 * mm, h / 2), Offset(w / 2 + 10 * mm, h / 2), line);
+    // mm rulers from each edge (10 mm long, tick every 1 mm, long tick every 5)
+    final tick = Paint()
+      ..color = brandOrange
+      ..strokeWidth = 2;
+    for (var i = 0; i <= 10; i++) {
+      final l = (i % 5 == 0 ? 4 : 2) * mm;
+      canvas.drawLine(Offset(w / 2 + 6 * mm, i * mm), Offset(w / 2 + 6 * mm + l, i * mm), tick); // top
+      canvas.drawLine(Offset(w / 2 + 6 * mm, h - i * mm), Offset(w / 2 + 6 * mm + l, h - i * mm), tick); // bottom
+      canvas.drawLine(Offset(i * mm, h / 2 + 6 * mm), Offset(i * mm, h / 2 + 6 * mm + l), tick); // left
+      canvas.drawLine(Offset(w - i * mm, h / 2 + 6 * mm), Offset(w - i * mm, h / 2 + 6 * mm + l), tick); // right
+    }
+    final tp = TextPainter(
+      text: TextSpan(
+          text: 'OctoSnap calibration ${paper.name}\nBlack border should be 3 mm from every edge.\n'
+              'Orange ticks = 1 mm from the edge.',
+          style: TextStyle(fontFamily: 'Poppins', fontSize: 0.11 * dpi, color: Colors.black)),
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: w * 0.8);
+    tp.paint(canvas, Offset((w - tp.width) / 2, h / 2 + 14 * mm));
+    final image = await recorder.endRecording().toImage(wPx, hPx);
     final data = await image.toByteData(format: ui.ImageByteFormat.png);
     return data!.buffer.asUint8List();
   }

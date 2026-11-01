@@ -9,14 +9,26 @@ import 'package:printing/printing.dart';
 import 'models.dart';
 
 class PrintService {
-  static Future<Uint8List> buildPdf(Uint8List png, PaperSize paper) async {
+  static Future<Uint8List> buildPdf(Uint8List png, PaperSize paper, [PrintSettings? cal]) async {
     final doc = pw.Document();
     final format = PdfPageFormat(paper.w * PdfPageFormat.inch, paper.h * PdfPageFormat.inch, marginAll: 0);
     final img = pw.MemoryImage(png);
+    final dx = (cal?.offsetXmm ?? 0) * PdfPageFormat.mm;
+    final dy = (cal?.offsetYmm ?? 0) * PdfPageFormat.mm;
+    final sc = (cal?.scalePct ?? 100) / 100;
     doc.addPage(pw.Page(
       pageFormat: format,
       margin: pw.EdgeInsets.zero,
-      build: (_) => pw.SizedBox.expand(child: pw.Image(img, fit: pw.BoxFit.fill)),
+      build: (_) => pw.SizedBox.expand(
+        child: pw.Transform.translate(
+          // PDF y axis points up, so a positive "down" offset is negative here.
+          offset: PdfPoint(dx, -dy),
+          child: pw.Transform.scale(
+            scale: sc,
+            child: pw.Image(img, fit: pw.BoxFit.fill),
+          ),
+        ),
+      ),
     ));
     return doc.save();
   }
@@ -29,7 +41,7 @@ class PrintService {
   /// Prints the sheet. On desktop with a saved printer it prints silently `copies` times;
   /// otherwise it opens the system print dialog (Android: Epson iPrint / Mopria service).
   static Future<bool> printSheet(Uint8List png, BoothEvent event) async {
-    final pdf = await buildPdf(png, event.layout.paper);
+    final pdf = await buildPdf(png, event.layout.paper, event.print);
     final ps = event.print;
     final format = PdfPageFormat(event.layout.paper.w * PdfPageFormat.inch,
         event.layout.paper.h * PdfPageFormat.inch, marginAll: 0);
@@ -42,5 +54,11 @@ class PrintService {
       return ok;
     }
     return Printing.layoutPdf(onLayout: (_) async => pdf, name: 'OctoSnap ${event.name}', format: format);
+  }
+
+  /// Opens the system share sheet (WhatsApp, Drive, Bluetooth…) with the sheet as a PDF.
+  static Future<void> share(Uint8List png, BoothEvent event, String filename) async {
+    final pdf = await buildPdf(png, event.layout.paper);
+    await Printing.sharePdf(bytes: pdf, filename: filename);
   }
 }

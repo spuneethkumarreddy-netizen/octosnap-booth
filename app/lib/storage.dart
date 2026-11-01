@@ -69,6 +69,26 @@ class EventStore extends ChangeNotifier {
     return e;
   }
 
+  /// Final sheets saved for an event, newest first.
+  Future<List<File>> sheetsFor(BoothEvent e) async {
+    if (!await photosDir.exists()) return [];
+    final files = <File>[];
+    await for (final f in photosDir.list()) {
+      final name = f.path.split(RegExp(r'[\\/]')).last;
+      if (f is File && name.startsWith('${e.id}_') && name.endsWith('_sheet.png')) files.add(f);
+    }
+    files.sort((a, b) => b.path.compareTo(a.path));
+    return files;
+  }
+
+  /// Deletes a sheet and its single shots.
+  Future<void> deleteSheet(File sheet) async {
+    final prefix = sheet.path.substring(0, sheet.path.length - '_sheet.png'.length);
+    await for (final f in photosDir.list()) {
+      if (f is File && (f.path == sheet.path || f.path.startsWith('${prefix}_shot'))) await f.delete();
+    }
+  }
+
   Future<void> delete(BoothEvent e) async {
     events.remove(e);
     await save();
