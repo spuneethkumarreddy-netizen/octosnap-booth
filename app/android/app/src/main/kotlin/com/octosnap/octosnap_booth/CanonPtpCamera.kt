@@ -88,19 +88,45 @@ class CanonPtpCamera private constructor(
                 if (ep.direction == UsbConstants.USB_DIR_IN) inEp = ep else outEp = ep
             }
             if (inEp == null || outEp == null) throw IllegalStateException("Camera has no bulk endpoints")
-            val conn = mgr.openDevice(dev) ?: throw IllegalStateException("Could not open USB device")
-            if (!conn.claimInterface(intf, true)) {
-                conn.close()
-                throw IllegalStateException("Camera is busy (close other camera apps)")
+            val info = "VID %04X PID %04X, intf %d, out 0x%02X/%d, in 0x%02X/%d".format(
+                dev.vendorId, dev.productId, intf.id, outEp.address, outEp.maxPacketSize, inEp.address, inEp.maxPacketSize)
+            // Up to 3 attempts: a camera left mid-transaction (app killed, earlier error) has its
+            // pipes stalled; a PTP device reset + clear-halt and a fresh connection recovers it.
+            var last: Exception? = null
+            for (attempt in 1..3) {
+                val conn = mgr.openDevice(dev) ?: throw IllegalStateException("Could not open USB device")
+                if (!conn.claimInterface(intf, true)) {
+                    conn.close()
+                    throw IllegalStateException("Camera is busy (close other camera / gallery import apps)")
+                }
+                resetPipes(conn, intf, inEp, outEp, hard = attempt > 1)
+                val cam = CanonPtpCamera(mgr, dev, conn, intf, inEp, outEp)
+                try {
+                    cam.init()
+                    return cam
+                } catch (e: Exception) {
+                    last = e
+                    try { conn.releaseInterface(intf) } catch (_: Exception) {}
+                    try { conn.close() } catch (_: Exception) {}
+                    Thread.sleep(700L * attempt)
+                }
             }
-            val cam = CanonPtpCamera(mgr, dev, conn, intf, inEp, outEp)
-            try {
-                cam.init()
-            } catch (e: Exception) {
-                cam.close()
-                throw e
+            throw IllegalStateException("${last?.message} [$info]")
+        }
+
+        private fun resetPipes(c: UsbDeviceConnection, intf: UsbInterface, epIn: UsbEndpoint, epOut: UsbEndpoint, hard: Boolean) {
+            if (hard) {
+                // PTP class request "Device Reset" (0x66)
+                c.controlTransfer(0x21, 0x66, 0, intf.id, null, 0, 2000)
+                Thread.sleep(300)
             }
-            return cam
+            // CLEAR_FEATURE(ENDPOINT_HALT) on both bulk pipes
+            c.controlTransfer(0x02, 0x01, 0, epOut.address, null, 0, 1000)
+            c.controlTransfer(0x02, 0x01, 0, epIn.address, null, 0, 1000)
+            // drain anything stale the camera still wants to send
+            val junk = ByteArray(epIn.maxPacketSize.coerceAtLeast(512) * 8)
+            var i = 0
+            while (i++ < 4 && c.bulkTransfer(epIn, junk, junk.size, 100) > 0) {}
         }
 
         private fun findPtp(d: UsbDevice): UsbInterface? {
@@ -260,8 +286,10 @@ class CanonPtpCamera private constructor(
     private fun write(b: ByteArray) {
         var off = 0
         while (off < b.size) {
-            val n = conn.bulkTransfer(epOut, b, off, minOf(b.size - off, 16384), TIMEOUT)
-            if (n < 0) throw IllegalStateException("USB write failed (camera disconnected?)")
+            val len = minOf(b.size - off, 16384)
+            val chunk = if (off == 0 && len == b.size) b else b.copyOfRange(off, off + len)
+            val n = conn.bulkTransfer(epOut, chunk, len, TIMEOUT)
+            if (n < 0) throw IllegalStateException("USB write failed at op 0x%04X (camera not answering)".format(u16(b, 6)))
             off += n
         }
         // A transfer that is an exact multiple of the packet size needs a zero-length packet.

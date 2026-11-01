@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
@@ -31,10 +32,26 @@ class _CameraSettingsScreenState extends State<CameraSettingsScreen> {
     setState(() => _dslrStatus = 'Searching…');
     try {
       final name = await Dslr.connect();
+      if (mounted) setState(() => _dslrStatus = '✓ $name connected. Checking live view…');
+      var live = 'live view not ready';
+      try {
+        await Dslr.startLiveView();
+        for (var i = 0; i < 15; i++) {
+          final f = await Dslr.liveFrame();
+          if (f != null && f.isNotEmpty) {
+            live = 'live view OK';
+            break;
+          }
+          await Future.delayed(const Duration(milliseconds: 200));
+        }
+      } catch (e) {
+        live = 'live view error: ${e is PlatformException ? e.message : e}';
+      }
       await Dslr.close();
-      if (mounted) setState(() => _dslrStatus = '✓ $name connected');
+      if (mounted) setState(() => _dslrStatus = '✓ $name connected, $live');
     } catch (err) {
-      if (mounted) setState(() => _dslrStatus = 'Not found: $err');
+      final msg = err is PlatformException ? err.message : '$err';
+      if (mounted) setState(() => _dslrStatus = 'Not connected: $msg');
     }
   }
 
