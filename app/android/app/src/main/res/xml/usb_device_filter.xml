@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Canon (vendor 0x04A9 = 1193) and any PTP still-image camera (class 6) -->
+    <usb-device vendor-id="1193" />
+    <usb-device class="6" subclass="1" protocol="1" />
+</resources>

@@ -1,6 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
+import '../dslr.dart';
 import '../models.dart';
 
 String cameraLabel(CameraDescription c) {
@@ -20,6 +21,23 @@ class CameraSettingsScreen extends StatefulWidget {
 }
 
 class _CameraSettingsScreenState extends State<CameraSettingsScreen> {
+  String? _dslrStatus;
+
+  Future<void> _testDslr() async {
+    if (!Dslr.supported) {
+      setState(() => _dslrStatus = 'Windows DSLR support coming next');
+      return;
+    }
+    setState(() => _dslrStatus = 'Searching…');
+    try {
+      final name = await Dslr.connect();
+      await Dslr.close();
+      if (mounted) setState(() => _dslrStatus = '✓ $name connected');
+    } catch (err) {
+      if (mounted) setState(() => _dslrStatus = 'Not found: $err');
+    }
+  }
+
   List<CameraDescription> cameras = [];
   CameraController? ctl;
   String? error;
@@ -100,10 +118,27 @@ class _CameraSettingsScreenState extends State<CameraSettingsScreen> {
             RadioListTile(
               value: CameraSource.usbDslr,
               title: Text('USB DSLR (Canon EOS R10 via USB-C)'),
-              subtitle: Text('Coming in phase 2 — booth falls back to the built-in camera for now'),
+              subtitle: Text('Android: USB-C cable / OTG. If not found, booth uses the built-in camera.'),
             ),
           ]),
         ),
+        if (s.source == CameraSource.usbDslr)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              FilledButton.icon(
+                onPressed: _testDslr,
+                icon: const Icon(Icons.usb),
+                label: Text(_dslrStatus ?? 'Test DSLR connection'),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Camera lo: Image quality = JPEG (L), Auto power off = Disable, Wi-Fi off. '
+                'Camera ON chesi cable connect cheyyandi, permission adigithe Allow nokkandi.',
+                style: TextStyle(color: Colors.white60, fontSize: 12),
+              ),
+            ]),
+          ),
         if (cameras.isNotEmpty)
           DropdownButtonFormField<String>(
             initialValue: cameras.any((x) => x.name == s.cameraName) ? s.cameraName : cameras.first.name,

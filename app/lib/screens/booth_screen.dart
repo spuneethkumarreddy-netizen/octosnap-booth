@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../compositor.dart';
+import '../dslr.dart';
 import '../models.dart';
 import '../print_service.dart';
 import '../storage.dart';
@@ -29,6 +30,11 @@ class BoothScreen extends StatefulWidget {
 class _BoothScreenState extends State<BoothScreen> {
   CameraController? ctl;
   String? cameraError;
+  // USB DSLR state
+  bool _dslr = false;
+  bool _dslrBusy = false; // pause live view while the shutter fires
+  Uint8List? _liveFrame;
+  String? _dslrName;
   _Stage stage = _Stage.welcome;
   int countdown = 0;
   int shotIndex = 0;
@@ -59,7 +65,75 @@ class _BoothScreenState extends State<BoothScreen> {
         (_) => _toast('Operator menu (edit / exit): press Back, or hold the top-left corner for 2 seconds'));
   }
 
+  bool get _camReady => _dslr ? _liveFrame != null : (ctl?.value.isInitialized ?? false);
+
   Future<void> _initCamera() async {
+    if (e.camera.source == CameraSource.usbDslr && Dslr.supported) {
+      try {
+        _dslrName = await Dslr.connect();
+        await Dslr.startLiveView();
+        if (!mounted) return;
+        setState(() => _dslr = true);
+        _toast('$_dslrName connected');
+        _liveLoop();
+        return;
+      } catch (err) {
+        _toast('DSLR not found, using built-in camera. ($err)');
+      }
+    }
+    await _initBuiltIn();
+  }
+
+  /// Pulls live-view frames from the DSLR; falls back to built-in camera if it disconnects.
+  Future<void> _liveLoop() async {
+    var errors = 0;
+    while (_live && _dslr) {
+      if (_dslrBusy) {
+        await Future.delayed(const Duration(milliseconds: 50));
+        continue;
+      }
+      try {
+        final f = await Dslr.liveFrame();
+        errors = 0;
+        if (f != null && _live && !_dslrBusy) setState(() => _liveFrame = f);
+        if (f == null) await Future.delayed(const Duration(milliseconds: 60));
+      } catch (err) {
+        if (++errors >= 6) {
+          await _dslrLost();
+          return;
+        }
+        await Future.delayed(const Duration(milliseconds: 200));
+      }
+    }
+  }
+
+  Future<void> _dslrLost() async {
+    if (!_live) return;
+    _session++;
+    await Dslr.close();
+    setState(() {
+      _dslr = false;
+      _liveFrame = null;
+      stage = _Stage.welcome;
+    });
+    _toast('DSLR disconnected — switched to built-in camera');
+    await _initBuiltIn();
+  }
+
+  Future<Uint8List> _takePhoto() async {
+    if (_dslr) {
+      _dslrBusy = true;
+      try {
+        return await Dslr.capture();
+      } finally {
+        _dslrBusy = false;
+      }
+    }
+    final file = await ctl!.takePicture();
+    return file.readAsBytes();
+  }
+
+  Future<void> _initBuiltIn() async {
     try {
       final cams = await availableCameras();
       if (cams.isEmpty) throw 'No camera found';
@@ -87,6 +161,7 @@ class _BoothScreenState extends State<BoothScreen> {
     _exitTimer?.cancel();
     _idleTimer?.cancel();
     ctl?.dispose();
+    if (_dslr) Dslr.close();
     WakelockPlus.disable().catchError((_) {});
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
@@ -96,8 +171,7 @@ class _BoothScreenState extends State<BoothScreen> {
 
   /// Welcome tapped: let the guest choose a template when there are several.
   void _onStart() {
-    final c = ctl;
-    if (_suppressTap || c == null || !c.value.isInitialized || stage != _Stage.welcome) return;
+    if (_suppressTap || !_camReady || stage != _Stage.welcome) return;
     _homeLayout = e.activeLayout;
     if (e.layouts.length > 1) {
       setState(() => stage = _Stage.choose);
@@ -114,8 +188,7 @@ class _BoothScreenState extends State<BoothScreen> {
   }
 
   Future<void> _runSession() async {
-    final c = ctl;
-    if (c == null || !c.value.isInitialized || stage != _Stage.welcome) return;
+    if (!_camReady || stage != _Stage.welcome) return;
     final my = ++_session;
     bool ok() => _live && my == _session;
     final total = e.layout.shotCount;
@@ -139,8 +212,7 @@ class _BoothScreenState extends State<BoothScreen> {
           SystemSound.play(SystemSoundType.click);
           HapticFeedback.mediumImpact();
         }
-        final file = await c.takePicture();
-        bytes = await file.readAsBytes();
+        bytes = await _takePhoto();
       } catch (err) {
         setState(() => flash = false);
         _toast('Capture failed: $err');
@@ -395,18 +467,30 @@ class _BoothScreenState extends State<BoothScreen> {
   }
 
   Widget _preview() {
-    final c = ctl;
-    if (cameraError != null) {
-      return Center(child: Text('Camera problem: $cameraError', style: const TextStyle(color: Colors.white)));
+    final portrait = MediaQuery.of(context).orientation == Orientation.portrait;
+    Widget view;
+    double ar; // displayed aspect (width/height) before rotation
+    if (_dslr) {
+      final f = _liveFrame;
+      if (f == null) return const Center(child: CircularProgressIndicator());
+      ar = 3 / 2; // Canon live view is 3:2
+      view = AspectRatio(aspectRatio: ar, child: Image.memory(f, gaplessPlayback: true, fit: BoxFit.fill));
+    } else {
+      final c = ctl;
+      if (cameraError != null) {
+        return Center(child: Text('Camera problem: $cameraError', style: const TextStyle(color: Colors.white)));
+      }
+      if (c == null || !c.value.isInitialized) return const Center(child: CircularProgressIndicator());
+      ar = portrait ? 1 / c.value.aspectRatio : c.value.aspectRatio;
+      view = CameraPreview(c);
     }
-    if (c == null || !c.value.isInitialized) return const Center(child: CircularProgressIndicator());
     final preview = Center(
       child: RotatedBox(
         quarterTurns: e.camera.quarterTurns,
         child: Transform(
           alignment: Alignment.center,
           transform: Matrix4.diagonal3Values(e.camera.mirrorPreview ? -1 : 1, 1, 1),
-          child: CameraPreview(c),
+          child: view,
         ),
       ),
     );
@@ -414,10 +498,8 @@ class _BoothScreenState extends State<BoothScreen> {
     if (!e.capture.showCropGuide || boxAr == null) return preview;
     return LayoutBuilder(builder: (context, cons) {
       // Displayed preview aspect (width/height) as CameraPreview lays it out.
-      final portrait = MediaQuery.of(context).orientation == Orientation.portrait;
-      var ar = portrait ? 1 / c.value.aspectRatio : c.value.aspectRatio;
-      if (e.camera.quarterTurns.isOdd) ar = 1 / ar;
-      final pr = _fit(ar, cons.maxWidth, cons.maxHeight);
+      final shownAr = e.camera.quarterTurns.isOdd ? 1 / ar : ar;
+      final pr = _fit(shownAr, cons.maxWidth, cons.maxHeight);
       final guide = _fit(boxAr, pr.width, pr.height).shift(pr.topLeft);
       return Stack(fit: StackFit.expand, children: [
         preview,
