@@ -56,9 +56,20 @@ class _LayoutEditorScreenState extends State<LayoutEditorScreen> {
   }
 
   Future<void> _importTemplate() async {
-    final r = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['png']);
+    // FileType.image: Android galleries/WhatsApp folders often don't tag files as .png,
+    // so a png-only filter greys them out. Accept any image, then check for real PNG.
+    final r = await FilePicker.pickFiles(type: FileType.image);
     final path = r.isEmpty ? null : r.first.path;
     if (path == null) return;
+    final head = await File(path).openRead(0, 8).fold<List<int>>([], (a, b) => a..addAll(b));
+    final isPng = head.length >= 8 && head[0] == 0x89 && head[1] == 0x50 && head[2] == 0x4E && head[3] == 0x47;
+    if (!isPng && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          duration: Duration(seconds: 8),
+          content: Text('This image is not a PNG, so it has no transparent photo window. '
+              'WhatsApp converts photos to JPG: send the template as a Document instead. '
+              'Imported anyway; photos will go behind it only where it is transparent.')));
+    }
     final saved = await EventStore.instance.importAsset(path);
     // Match paper orientation to the template's aspect ratio when it clearly differs.
     final bytes = await File(saved).readAsBytes();
