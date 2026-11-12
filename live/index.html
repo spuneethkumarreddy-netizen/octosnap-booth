@@ -1,0 +1,132 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2a0610"><meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>OctoSnap Live · Mobile</title>
+<style>
+/* OctoSnap Live mobile v2.0: the whole booth on one Android phone. No laptop, no server.
+   Camera, AI (OpenAI, key saved on this phone only), drawing animation, printing (Android print service), share / save. */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#2a0610;color:#fff;font-family:-apple-system,"Segoe UI",Roboto,system-ui,sans-serif}
+body{display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+header{display:flex;align-items:center;gap:10px;padding:10px 14px}
+header b{font-size:18px}header .ev{flex:1;color:#f2c45acc;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{font-size:11px;font-weight:800;padding:3px 8px;border-radius:99px;background:#f2c45a;color:#3a0715}.tag.real{background:#22c55e;color:#fff}
+.ib{border:0;background:#ffffff1a;color:#fff;border-radius:12px;width:40px;height:40px;font-size:19px}
+main{flex:1;overflow:auto;padding:0 14px 14px;position:relative}
+.view{display:none}.view.on{display:block}
+h2{font:600 24px Georgia,serif;margin:8px 0 12px;text-align:center}
+h3{font-size:15px;margin:18px 0 8px;color:#f2c45a}
+.cam{position:relative;border-radius:18px;overflow:hidden;background:#000;aspect-ratio:3/4;max-height:52vh;margin:0 auto}
+.cam video,.cam img{width:100%;height:100%;object-fit:cover;display:block}
+.cam .cd{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:800 120px Georgia,serif;color:#fff;text-shadow:0 6px 30px #000;pointer-events:none}
+.cam .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .4s}
+.cam .msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:#ffffffcc;font-size:14px}
+.mirror{transform:scaleX(-1)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 2px 4px}
+.chip{flex:none;border:2px solid #ffffff2a;background:#ffffff10;color:#fff;border-radius:99px;padding:9px 14px;font:700 14px system-ui,sans-serif;white-space:nowrap}
+.chip.on{border-color:#f2c45a;background:#f2c45a;color:#3a0715}
+.row{display:flex;gap:8px;align-items:center;margin:8px 0}
+.seg{display:flex;background:#ffffff14;border-radius:12px;padding:3px;flex:1}
+.seg button{flex:1;border:0;background:none;color:#fff;font:700 14px system-ui,sans-serif;padding:9px 0;border-radius:9px}
+.seg button.on{background:#f2c45a;color:#3a0715}
+label.l{font-size:13px;color:#ffffffaa;min-width:58px}
+input.t,select.t,textarea.t{flex:1;width:100%;font:16px system-ui,sans-serif;padding:11px 12px;border-radius:12px;border:0;background:#ffffff1a;color:#fff}
+select.t option{color:#000}
+.shoot{display:flex;align-items:center;justify-content:center;gap:22px;margin:12px 0 4px}
+.shutter{width:84px;height:84px;border-radius:50%;border:6px solid #fff;background:#f2c45a;box-shadow:0 0 0 6px #ffffff22}
+.shutter:active{transform:scale(.95)}
+.btn{display:block;width:100%;border:0;border-radius:16px;padding:15px;font:800 17px system-ui,sans-serif;background:#f2c45a;color:#3a0715;margin-top:10px}
+.btn.g{background:#ffffff1f;color:#fff}.btn.ok{background:#22c55e;color:#fff}.btn.r{background:#ef4444;color:#fff}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.btns .btn{margin-top:0}
+.pic{width:100%;max-height:56vh;object-fit:contain;border-radius:14px;background:#fff;display:block}
+#drawCv{width:100%;max-height:52vh;object-fit:contain;border-radius:14px;background:#fbf8f2;display:block}
+.wait{text-align:center;color:#ffffffcc;font-size:15px;margin:10px 0}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 12px}
+.kpi div{background:#ffffff12;border-radius:14px;padding:12px 6px;text-align:center}.kpi b{display:block;font-size:22px}.kpi small{color:#ffffff99;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.grid img{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:8px;background:#fff}
+.card{background:#ffffff10;border-radius:16px;padding:14px;margin:10px 0}
+.card small,.note{display:block;color:#ffffff99;font-size:12.5px;line-height:1.45;margin-top:4px}
+.chk{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #ffffff12;font-size:14px}.chk input{width:20px;height:20px}
+nav{display:flex;border-top:1px solid #ffffff1a;background:#21040c}
+nav button{flex:1;border:0;background:none;color:#ffffff88;font:700 12px system-ui,sans-serif;padding:9px 0 11px}
+nav button span{display:block;font-size:21px}nav button.on{color:#f2c45a}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#000d;padding:10px 16px;border-radius:12px;font-size:14px;display:none;z-index:30;max-width:90vw;text-align:center}
+#ovl{position:fixed;inset:0;background:#2a0610;z-index:20;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center}
+#ovl.on{display:flex}#ovl img{max-width:70vw;max-height:46vh;border-radius:8px;background:#fff}#ovl .btn,#ovl .btns{max-width:360px;width:100%}
+#ovl h3{margin:0;font:600 22px Georgia,serif;color:#fff}#ovl p{margin:0;color:#ffffffbb;font-size:14px;line-height:1.4}
+#tv{position:fixed;inset:0;background:#000;z-index:25;display:none;align-items:center;justify-content:center}#tv.on{display:flex}
+#tv canvas{max-width:100vw;max-height:100vh}
+#printArea{display:none}
+@media print{body>*{display:none!important}#printArea{display:block!important}#printArea img{display:block;page-break-after:always;break-after:page}#printArea img:last-child{page-break-after:auto;break-after:auto}html,body{background:#fff;margin:0;padding:0}}
+</style><style id="pg">@page{size:4in 6in;margin:0}</style></head><body>
+<header><b>🐙 OctoSnap</b><span class="ev" id="evName"></span><span class="tag" id="modeTag">TEST</span><button class="ib" id="tvBtn" title="TV mode">📺</button></header>
+<main>
+  <!-- BOOTH -->
+  <section class="view on" id="vBooth">
+    <div class="cam" id="camBox"><video id="video" playsinline muted autoplay></video><img id="shot" style="display:none" alt="">
+      <div class="msg" id="camMsg">Starting camera…</div><div class="cd" id="cd"></div><div class="flash" id="flash"></div></div>
+    <div class="chips" id="styleChips"></div>
+    <div class="row"><label class="l">People</label><div class="seg" id="people"><button data-v="0" class="on">Auto</button><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4+</button></div></div>
+    <div class="row"><label class="l">Name</label><input class="t" id="gName" maxlength="40" placeholder="Guest name (optional)" autocomplete="off"></div>
+    <div id="shootBar" class="shoot"><button class="ib" id="flip" title="Switch camera">🔄</button><button class="shutter" id="snap" aria-label="Take photo"></button><button class="ib" id="pick" title="Pick a photo">🖼</button></div>
+    <div id="reviewBar" style="display:none"><div class="btns"><button class="btn g" id="again">↺ Retake photo</button><button class="btn" id="go">✨ Draw me!</button></div></div>
+    <input type="file" id="file" accept="image/*" hidden>
+  </section>
+  <!-- DRAWING + RESULT -->
+  <section class="view" id="vDraw">
+    <canvas id="drawCv" width="1024" height="1536"></canvas>
+    <div class="wait" id="drawMsg">The artist is drawing…</div>
+    <div id="resBar" style="display:none">
+      <div class="btns"><button class="btn" id="print">🖨 Print</button><button class="btn g" id="share">📤 Share</button></div>
+      <div class="btns"><button class="btn g" id="save">⬇ Save</button><button class="btn g" id="retake">↺ New drawing</button></div>
+      <button class="btn ok" id="next">Next guest →</button>
+    </div>
+    <div id="errBar" style="display:none"><button class="btn" id="tryAgain">Try again</button><button class="btn g" id="cancel">Back to camera</button></div>
+  </section>
+  <!-- GALLERY -->
+  <section class="view" id="vGallery">
+    <h2 id="gTitle">This event</h2>
+    <div class="kpi"><div><b id="kPics">0</b><small>pictures</small></div><div><b id="kPrints">0</b><small>prints</small></div><div><b id="kCost">₹0</b><small>AI cost</small></div></div>
+    <div class="grid" id="grid"></div>
+    <div class="note" id="gEmpty" style="text-align:center;margin-top:20px">No pictures yet.</div>
+  </section>
+  <!-- SETTINGS -->
+  <section class="view" id="vSet">
+    <h2>Event settings</h2>
+    <div class="card"><div class="row"><label class="l">Event</label><input class="t" id="sEvent" maxlength="60"></div>
+      <div class="row"><label class="l">Date</label><input class="t" id="sDate" type="date"></div>
+      <div class="row"><label class="l">Footer</label><input class="t" id="sFooter" maxlength="80"></div>
+      <div class="row"><label class="l">Copies</label><div class="seg" id="sCopies"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button></div></div>
+      <div class="row"><label class="l">Drawing</label><div class="seg" id="sDrawSec"><button data-v="15">15 s</button><button data-v="25">25 s</button><button data-v="35">35 s</button></div></div>
+      <div class="row"><label class="l">Retakes</label><div class="seg" id="sRetakes"><button data-v="0">0</button><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button></div></div>
+      <div class="row"><label class="l">AI limit</label><input class="t" id="sLimit" type="number" min="0" placeholder="max pictures (empty = no limit)"></div>
+    </div>
+    <h3>Styles for this event</h3>
+    <div class="card" id="sStyles"></div>
+    <h3>AI</h3>
+    <div class="card">
+      <div class="seg" id="sMode"><button data-v="test">Test mode (₹0)</button><button data-v="real">Real AI (~₹4 each)</button></div>
+      <div class="row" style="margin-top:12px"><input class="t" id="sKey" type="password" placeholder="OpenAI API key (sk-…)" autocomplete="off"></div>
+      <small>The key is saved only on this phone (never in the app code, never sent anywhere except OpenAI). Lock settings with a PIN so guests can't open them.</small>
+      <button class="btn g" id="sTest">Check key (free)</button><small id="sKeyMsg"></small>
+    </div>
+    <h3>Printing</h3>
+    <div class="card"><small>Print uses the Android print screen. Install <b>Epson Print Enabler</b> from Play Store, turn it on, same Wi-Fi as the Epson. First print: pick the Epson, paper 4×6 in (10×15 cm), borderless, then Android remembers it. Or use Share → Epson Smart Panel.</small>
+      <button class="btn g" id="sTestPrint">Print a test page</button></div>
+    <h3>Lock</h3>
+    <div class="card"><div class="row"><label class="l">PIN</label><input class="t" id="sPin" inputmode="numeric" maxlength="8" placeholder="4-8 digits (empty = no lock)"></div></div>
+    <button class="btn" id="sSave">Save</button>
+    <button class="btn g" id="sNewEvent">Start a new event (keeps old pictures in Gallery → Export first)</button>
+    <button class="btn g" id="sExport">Export this event's pictures</button>
+    <div class="note" style="text-align:center;margin-top:12px">OctoSnap Live mobile v2.0 · works without a laptop</div>
+  </section>
+</main>
+<nav><button class="on" data-v="vBooth"><span>📷</span>Booth</button><button data-v="vDraw"><span>🎨</span>Picture</button><button data-v="vGallery"><span>🖼</span>Gallery</button><button data-v="vSet"><span>⚙️</span>Settings</button></nav>
+<div id="ovl"></div>
+
+<div id="printArea"></div>
+<div id="toast"></div>
+<script src="strokes.js"></script><script src="anim.js"></script><script src="app.js"></script>
+</body></html>

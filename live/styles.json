@@ -1,0 +1,912 @@
+{
+ "version": "1.5.0",
+ "source": "OctoSnap AI Style Catalogue (owner) + identity block v2 approved 2026-11-11 06:40",
+ "basePrompt": "Transform the uploaded reference photo into a finished OctoSnap AI image. Depict exactly {people_count} distinct guests from the reference. Preserve recognizable facial features, skin tone, age appearance and distinctive hair or glasses. Keep every face clearly visible. Adapt wardrobe, lighting and setting to the chosen look. Use a lead composition for one guest, a shared composition for two, and an ensemble for three to six. For five or six guests, use a wide frame and staggered rows where useful. Avoid extra subjects and duplicate faces. Leave room for any optional event text overlay.",
+ "identityBlock": "Use the uploaded photo as the identity reference for every guest.\nThe image must show exactly {people_count} people, the same people as in the photo. Do not add or remove anyone.\n\nPreserve each person's recognizable face shape, eye shape and spacing, nose, lips, smile, skin tone, apparent age, hairline, hairstyle, and distinctive features such as glasses, facial hair, moles, bindi, tilak, turban, hijab, and jewellery.\n\nDo not lighten or change skin tone. Do not slim, beautify, or age anyone. Children must look their real age.\n\nMatch each generated guest to exactly one person in the source photo. Keep all faces clearly visible and facing the viewer. Do not swap, merge, or duplicate faces. If the style conflicts with facial likeness, prioritize facial likeness.\n\nFor caricature, cartoon, anime, and 3D animated styles, stylize the rendering and proportions while keeping each person's defining facial features recognizable.\n\nDo not add any text, letters, logos, or watermarks to the image.",
+ "composition": {
+  "solo": "Composition for 1 guest: a lead portrait, the one guest centred and large in a vertical frame, face sharp and clearly visible, framed from the waist or knees up.",
+  "couple": "Composition for 2 guests: a shared portrait, both guests side by side or close together in a vertical frame, both faces equally large and clearly visible.",
+  "group": "Composition for {people_count} guests: an ensemble in one row or a gentle arc across a horizontal frame, every face about the same size and clearly visible, nobody hidden.",
+  "large": "Composition for {people_count} guests: a wide ensemble in a horizontal frame with two staggered rows (front row slightly lower), nobody hidden behind anyone, every face clearly visible."
+ },
+ "sizes": {
+  "portrait": "1024x1536",
+  "landscape": "1536x1024",
+  "portraitUpTo": 2
+ },
+ "productPrompt": "The second attached image is the client's product: show that exact product (same shape, colours, label and logo) as the oversized prop, without changing its design.",
+ "letteringPrompt": "Exception for this look only: the giant sculptural 3D letters must read exactly \"{lettering}\" (no other text anywhere).",
+ "styles": [
+  {
+   "key": "caricature",
+   "num": 1,
+   "name": "Caricature",
+   "catalogueName": "Caricature",
+   "group": "Core styles",
+   "existing": true,
+   "newPack": false,
+   "reveal": "lines",
+   "anim": "caricature",
+   "looks": [
+    {
+     "id": "big-head-full-body-ink-caricature",
+     "name": "Big-head full-body ink caricature",
+     "prompt": "Edit the uploaded photo into Caricature (Big-head full-body ink caricature). Exaggerate signature features gently, with a small body and expressive pose. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    }
+   ],
+   "detail": "In the style of a professional live-event digital caricature artist: big heads on small cartoon bodies, full length, big happy smiles, fun pose. Bold clean black ink outlines, flat bright cel-shaded colours with simple highlights, no photo texture. A soft pastel circle behind the heads, plain white background.",
+   "desc": "Exaggerate signature features gently, with a small body and expressive pose",
+   "single": true
+  },
+  {
+   "key": "headshot",
+   "num": 2,
+   "name": "Headshot caricature",
+   "catalogueName": "Headshot Caricature",
+   "group": "Core styles",
+   "existing": true,
+   "newPack": false,
+   "reveal": "lines",
+   "anim": "headshot",
+   "looks": [
+    {
+     "id": "close-up-ink-caricature",
+     "name": "Close-up ink caricature",
+     "prompt": "Edit the uploaded photo into Headshot Caricature (Close-up ink caricature). Frame head and shoulders with a colour wash and lively expression. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    }
+   ],
+   "detail": "Like a live caricature artist drawing on an iPad: head and shoulders only, playful exaggeration, big heads, wide happy smiles. Bold black ink outlines, bright flat colours with soft shading, cartoon look, not photographic. A soft pastel watercolour circle behind, white background.",
+   "desc": "Frame head and shoulders with a colour wash and lively expression",
+   "single": true
+  },
+  {
+   "key": "pixar",
+   "num": 3,
+   "name": "3D Cartoon",
+   "catalogueName": "3D Cartoon",
+   "group": "Core styles",
+   "existing": true,
+   "newPack": false,
+   "reveal": "lines",
+   "anim": "pixar",
+   "looks": [
+    {
+     "id": "animated-portrait",
+     "name": "Animated portrait",
+     "prompt": "Edit the uploaded photo into 3D Cartoon (Animated portrait). Render rounded 3D characters with soft studio lighting. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    }
+   ],
+   "detail": "As a still frame from a big-studio 3D animated feature film: strongly stylised cartoon proportions, oversized heads, big expressive eyes, small simplified noses, smooth skin, chunky simplified hands and clothes with soft rounded shapes; absolutely not photorealistic. Bright soft animation lighting, simple pastel background.",
+   "desc": "Render rounded 3D characters with soft studio lighting",
+   "single": true
+  },
+  {
+   "key": "anime",
+   "num": 4,
+   "name": "Anime",
+   "catalogueName": "Anime",
+   "group": "Core styles",
+   "existing": true,
+   "newPack": false,
+   "reveal": "lines",
+   "anim": "anime",
+   "looks": [
+    {
+     "id": "cel-shaded-portrait",
+     "name": "Cel-shaded portrait",
+     "prompt": "Edit the uploaded photo into Anime (Cel-shaded portrait). Draw clean linework, stylized expressions and an illustrated sky. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    }
+   ],
+   "detail": "As 2D Japanese anime characters from a modern hand-drawn anime film: large shiny anime eyes, simple small nose, clean thin black line art, flat cel-shaded colours with crisp shadow shapes, glossy anime hair strands. Completely hand-drawn 2D, no realistic skin texture. Upper body, soft pastel sky with gentle sparkles.",
+   "desc": "Draw clean linework, stylized expressions and an illustrated sky",
+   "single": true
+  },
+  {
+   "key": "graffiti",
+   "num": 5,
+   "name": "Graffiti",
+   "catalogueName": "Graffiti",
+   "group": "Core styles",
+   "existing": true,
+   "newPack": false,
+   "reveal": "lines",
+   "anim": "graffiti",
+   "looks": [
+    {
+     "id": "street-art-portrait",
+     "name": "Street-art portrait",
+     "prompt": "Edit the uploaded photo into Graffiti (Street-art portrait). Use spray textures, paint splashes and bold contours. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    }
+   ],
+   "detail": "Graffiti street-art caricature: big heads, big smiles, upper body. Bold thick black outlines, bright spray-paint colours, yellow and orange paint drips and splashes behind on a white background, urban sticker-art look.",
+   "desc": "Use spray textures, paint splashes and bold contours",
+   "single": true
+  },
+  {
+   "key": "kids",
+   "num": 6,
+   "name": "Kids cartoon",
+   "catalogueName": "Kids Cartoon",
+   "group": "Styles with five looks",
+   "existing": true,
+   "newPack": false,
+   "reveal": "lines",
+   "anim": "caricature",
+   "looks": [
+    {
+     "id": "animal",
+     "name": "Animal Costume",
+     "prompt": "Edit the uploaded photo into Kids Cartoon (Animal Costume). Plush bunny and tiger outfits in a flower meadow. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Each child wears a cosy cute animal costume onesie with ears (bunny, tiger cub, panda, puppy or kitten), in a sunny meadow with flowers and butterflies."
+    },
+    {
+     "id": "princess",
+     "name": "Princess / Prince",
+     "prompt": "Edit the uploaded photo into Kids Cartoon (Princess / Prince). Pastel castle and fairytale outfits. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Dressed as a fairy-tale princess or prince (match the child) with a small sparkly crown, in front of a pastel storybook castle with rainbows and stars."
+    },
+    {
+     "id": "hero",
+     "name": "Little Superhero",
+     "prompt": "Edit the uploaded photo into Kids Cartoon (Little Superhero). Bright capes flying over a toy town. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Dressed as a tiny original superhero with a short cape and a star emblem, flying happily over a toy-town with clouds and balloons. Not any existing superhero."
+    },
+    {
+     "id": "space",
+     "name": "Little Astronaut",
+     "prompt": "Edit the uploaded photo into Kids Cartoon (Little Astronaut). Spacesuits among smiling planets. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Dressed as a little astronaut with a round helmet held under the arm, floating among smiling planets, stars and a cartoon rocket."
+    },
+    {
+     "id": "jungle",
+     "name": "Jungle Explorer",
+     "prompt": "Edit the uploaded photo into Kids Cartoon (Jungle Explorer). Safari outfits and friendly jungle animals. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Dressed as a little jungle explorer with a safari hat and binoculars, with friendly cartoon elephants, monkeys and parrots around."
+    }
+   ],
+   "detail": "Cute, gentle children's cartoon illustration: big friendly eyes, soft rounded shapes, bright happy pastel colours, picture-book style, wholesome and age-appropriate, faces large and clear.",
+   "desc": "Plush bunny and tiger outfits in a flower meadow",
+   "single": false
+  },
+  {
+   "key": "superhero",
+   "num": 7,
+   "name": "Superhero",
+   "catalogueName": "Superhero",
+   "group": "Styles with five looks",
+   "existing": true,
+   "newPack": false,
+   "reveal": "cinema",
+   "anim": "superhero",
+   "looks": [
+    {
+     "id": "rooftop",
+     "name": "Rooftop City Night",
+     "prompt": "Edit the uploaded photo into Superhero (Rooftop City Night). Caped heroes on a moonlit skyline. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Standing heroically on a skyscraper rooftop edge at night, cape blowing, glittering city lights and a big moon behind."
+    },
+    {
+     "id": "flying",
+     "name": "Flying in the Sky",
+     "prompt": "Edit the uploaded photo into Superhero (Flying in the Sky). Forward flight over golden clouds. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Flying through the sky above the clouds at golden hour, one fist forward, cape streaming, motion lines and birds far below."
+    },
+    {
+     "id": "storm",
+     "name": "Thunder Storm Power",
+     "prompt": "Edit the uploaded photo into Superhero (Thunder Storm Power). Electric blue lightning and comic impact lines. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Summoning lightning in a dramatic thunder storm, crackling blue electric energy around the hands, dark swirling clouds and rain."
+    },
+    {
+     "id": "armour",
+     "name": "Tech Armour",
+     "prompt": "Edit the uploaded photo into Superhero (Tech Armour). Glowing metallic exosuits in a futuristic setting. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Wearing sleek original high-tech armour with glowing light panels (helmet off so the face shows), holographic HUD lines and a futuristic lab or city behind."
+    },
+    {
+     "id": "fire",
+     "name": "Fire Energy",
+     "prompt": "Edit the uploaded photo into Superhero (Fire Energy). Orange energy trails and embers. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Surrounded by swirling orange fire energy and sparks, natural eyes, heat haze and embers, dark background."
+    }
+   ],
+   "detail": "Original comic-book superheroes, each in a different bold colourful hero suit with a glowing 'OS' emblem on the chest. Completely original character design, not any existing superhero, film character or real celebrity; no logos except that emblem. Bold comic-book ink outlines, vivid comic colours, cinematic lighting.",
+   "desc": "Caped heroes on a moonlit skyline",
+   "single": false
+  },
+  {
+   "key": "poster",
+   "num": 8,
+   "name": "Telugu Movie Poster",
+   "catalogueName": "Telugu Movie Poster",
+   "group": "Styles with five looks",
+   "existing": true,
+   "newPack": false,
+   "reveal": "cinema",
+   "anim": "poster",
+   "looks": [
+    {
+     "id": "mass",
+     "name": "Mass Action",
+     "prompt": "Edit the uploaded photo into Telugu Movie Poster (Mass Action). Low-angle lead pose, sparks and dust. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Mass action hero look: dramatic low-angle pose, intense stare, slow-motion dust, sparks and flying debris, jeeps and smoke behind, orange and teal grading."
+    },
+    {
+     "id": "romantic",
+     "name": "Romantic",
+     "prompt": "Edit the uploaded photo into Telugu Movie Poster (Romantic). Golden-hour lakeside and drifting petals. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Romantic family-entertainer look: soft golden-hour backlight, flower petals in the air, dreamy hills or a beach behind, warm pastel grading, gentle smiles."
+    },
+    {
+     "id": "police",
+     "name": "Police",
+     "prompt": "Edit the uploaded photo into Telugu Movie Poster (Police). Khaki costumes and red-blue reflections on a rain-soaked street. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Police action look: in a crisp khaki police uniform with sunglasses in hand, police jeep with flashing lights behind, rain and dramatic city night, steel-blue grading."
+    },
+    {
+     "id": "village",
+     "name": "Village Drama",
+     "prompt": "Edit the uploaded photo into Telugu Movie Poster (Village Drama). Traditional outfits, paddy fields and sunset temple skyline. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Rustic village drama look: in a traditional white panche or lungi and shirt (or cotton saree for women), paddy fields, temple gopuram and bullock cart behind, earthy sunset grading."
+    },
+    {
+     "id": "warrior",
+     "name": "Period Warrior",
+     "prompt": "Edit the uploaded photo into Telugu Movie Poster (Period Warrior). Historical armour and a fort under a dramatic sky. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Epic period warrior look: ancient armour and a sword or spear, a massive fort and army with flags behind, dust storm and fire, sepia-gold grading."
+    }
+   ],
+   "detail": "Telugu blockbuster movie poster look: cinematic colour grading, epic lighting, photo-real film poster finish. Leave clean empty space at the bottom for the title.",
+   "desc": "Low-angle lead pose, sparks and dust",
+   "single": false
+  },
+  {
+   "key": "maharaja",
+   "num": 9,
+   "name": "Maharaja / Maharani",
+   "catalogueName": "Maharaja / Maharani",
+   "group": "Styles with five looks",
+   "existing": true,
+   "newPack": false,
+   "reveal": "cinema",
+   "anim": "maharaja",
+   "looks": [
+    {
+     "id": "durbar",
+     "name": "Durbar Throne",
+     "prompt": "Edit the uploaded photo into Maharaja / Maharani (Durbar Throne). Formal seated court portrait. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Seated on a jewelled golden throne in a grand durbar hall with marble pillars, chandeliers and silk drapes."
+    },
+    {
+     "id": "balcony",
+     "name": "Palace Balcony",
+     "prompt": "Edit the uploaded photo into Maharaja / Maharani (Palace Balcony). Royal silks beneath carved arches. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Standing on a carved palace balcony (jharokha) overlooking a lake palace at sunset, pigeons in flight."
+    },
+    {
+     "id": "mount",
+     "name": "On Horse or Elephant",
+     "prompt": "Edit the uploaded photo into Maharaja / Maharani (On Horse or Elephant). Ceremonial procession with decorated mounts. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Riding a decorated royal horse or a painted royal elephant with a golden howdah, in a royal procession with flags."
+    },
+    {
+     "id": "lamps",
+     "name": "Garden of Lamps",
+     "prompt": "Edit the uploaded photo into Maharaja / Maharani (Garden of Lamps). Diyas illuminate a palace garden. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "In a royal palace garden at dusk lit by hundreds of glowing diyas and lanterns, fountains and marigold garlands."
+    },
+    {
+     "id": "battle",
+     "name": "Battle Armour",
+     "prompt": "Edit the uploaded photo into Maharaja / Maharani (Battle Armour). Engraved royal armour against a fort. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests.",
+     "detail": "Wearing royal gold-and-steel battle armour over the royal clothes, a jewelled sword, a fort and war banners behind."
+    }
+   ],
+   "detail": "Royal Indian portrait as Maharaja or Maharani (match each person): men in ornate gold-embroidered sherwani with jewelled turban and pearl necklaces; women in rich silk lehenga or saree with heavy royal gold jewellery and maang tikka. Rich painted oil-portrait style.",
+   "desc": "Formal seated court portrait",
+   "single": false
+  },
+  {
+   "key": "candy-factory-inventor",
+   "num": 10,
+   "name": "Candy Factory Inventor",
+   "catalogueName": "Candy Factory Inventor",
+   "group": "Birthday, wedding & corporate",
+   "existing": false,
+   "newPack": false,
+   "reveal": "cinema",
+   "anim": "poster",
+   "looks": [
+    {
+     "id": "chocolate-lab",
+     "name": "Chocolate Lab",
+     "prompt": "Edit the uploaded photo into Candy Factory Inventor (Chocolate Lab). Copper pipes feed an oversized chocolate fountain. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "gummy-workshop",
+     "name": "Gummy Workshop",
+     "prompt": "Edit the uploaded photo into Candy Factory Inventor (Gummy Workshop). Giant translucent candy moulds at a bright workbench. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "lollipop-assembly",
+     "name": "Lollipop Assembly",
+     "prompt": "Edit the uploaded photo into Candy Factory Inventor (Lollipop Assembly). Swirled candy discs on a conveyor. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "cotton-candy-lab",
+     "name": "Cotton Candy Lab",
+     "prompt": "Edit the uploaded photo into Candy Factory Inventor (Cotton Candy Lab). Pastel inventor uniforms amid pink and blue sugar clouds. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "birthday-cake-crew",
+     "name": "Birthday Cake Crew",
+     "prompt": "Edit the uploaded photo into Candy Factory Inventor (Birthday Cake Crew). Miniature guests decorating an oversized cake. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    }
+   ],
+   "desc": "Copper pipes feed an oversized chocolate fountain",
+   "single": false
+  },
+  {
+   "key": "wedding-time-capsule",
+   "num": 11,
+   "name": "Wedding Time Capsule",
+   "catalogueName": "Wedding Time Capsule",
+   "group": "Birthday, wedding & corporate",
+   "existing": false,
+   "newPack": false,
+   "reveal": "cinema",
+   "anim": "maharaja",
+   "looks": [
+    {
+     "id": "1960s-bandw-studio",
+     "name": "1960s B&W Studio",
+     "prompt": "Edit the uploaded photo into Wedding Time Capsule (1960s B&W Studio). Formal monochrome portrait with painted backdrop. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "1970s-hand-coloured-portrait",
+     "name": "1970s Hand-Coloured Portrait",
+     "prompt": "Edit the uploaded photo into Wedding Time Capsule (1970s Hand-Coloured Portrait). Hand-tinted sarees, flowers and jewellery. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "1980s-courtyard-wedding",
+     "name": "1980s Courtyard Wedding",
+     "prompt": "Edit the uploaded photo into Wedding Time Capsule (1980s Courtyard Wedding). Traditional outfits in an ancestral courtyard. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "1990s-wedding-album",
+     "name": "1990s Wedding Album",
+     "prompt": "Edit the uploaded photo into Wedding Time Capsule (1990s Wedding Album). Floral stage, direct flash and warm grain. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "2000s-reception-glam",
+     "name": "2000s Reception Glam",
+     "prompt": "Edit the uploaded photo into Wedding Time Capsule (2000s Reception Glam). Glossy lighting and shimmer drapes. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    }
+   ],
+   "desc": "Formal monochrome portrait with painted backdrop",
+   "single": false
+  },
+  {
+   "key": "mini-makers",
+   "num": 12,
+   "name": "Mini Makers",
+   "catalogueName": "Mini Makers",
+   "group": "Birthday, wedding & corporate",
+   "existing": false,
+   "newPack": true,
+   "reveal": "cinema",
+   "anim": "poster",
+   "looks": [
+    {
+     "id": "product-assembly",
+     "name": "Product Assembly",
+     "prompt": "Edit the uploaded photo into Mini Makers (Product Assembly). Miniature crew assembling a giant client product on scaffolding. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Use the supplied client product as the oversized prop."
+    },
+    {
+     "id": "design-lab",
+     "name": "Design Lab",
+     "prompt": "Edit the uploaded photo into Mini Makers (Design Lab). Crew reviewing a giant prototype and samples. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Use the supplied client product as the oversized prop."
+    },
+    {
+     "id": "quality-check",
+     "name": "Quality Check",
+     "prompt": "Edit the uploaded photo into Mini Makers (Quality Check). Inspect oversized details with measuring tools. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Use the supplied client product as the oversized prop."
+    },
+    {
+     "id": "packaging-crew",
+     "name": "Packaging Crew",
+     "prompt": "Edit the uploaded photo into Mini Makers (Packaging Crew). Lower the product into a huge box. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Use the supplied client product as the oversized prop."
+    },
+    {
+     "id": "launch-day",
+     "name": "Launch Day",
+     "prompt": "Edit the uploaded photo into Mini Makers (Launch Day). Reveal the finished product from behind a stage curtain. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Use the supplied client product as the oversized prop."
+    }
+   ],
+   "needsProduct": true,
+   "desc": "Miniature crew assembling a giant client product on scaffolding",
+   "single": false
+  },
+  {
+   "key": "band-together",
+   "num": 13,
+   "name": "Band Together",
+   "catalogueName": "Band Together",
+   "group": "Friends & family",
+   "existing": false,
+   "newPack": false,
+   "reveal": "cinema",
+   "anim": "superhero",
+   "looks": [
+    {
+     "id": "indie-rooftop",
+     "name": "Indie Rooftop",
+     "prompt": "Edit the uploaded photo into Band Together (Indie Rooftop). Sunset rooftop rehearsal. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "disco-night",
+     "name": "Disco Night",
+     "prompt": "Edit the uploaded photo into Band Together (Disco Night). Sequins and mirror ball. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "garage-jam",
+     "name": "Garage Jam",
+     "prompt": "Edit the uploaded photo into Band Together (Garage Jam). Vintage amps and rehearsal room. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "festival-headliners",
+     "name": "Festival Headliners",
+     "prompt": "Edit the uploaded photo into Band Together (Festival Headliners). Friends performing under concert lights. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "vinyl-cover",
+     "name": "Vinyl Cover",
+     "prompt": "Edit the uploaded photo into Band Together (Vinyl Cover). Graphic 1970s album portrait. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    }
+   ],
+   "desc": "Sunset rooftop rehearsal",
+   "single": false
+  },
+  {
+   "key": "game-night-crew",
+   "num": 14,
+   "name": "Game Night Crew",
+   "catalogueName": "Game Night Crew",
+   "group": "Friends & family",
+   "existing": false,
+   "newPack": false,
+   "reveal": "cinema",
+   "anim": "superhero",
+   "looks": [
+    {
+     "id": "arcade-team-select",
+     "name": "Arcade Team Select",
+     "prompt": "Edit the uploaded photo into Game Night Crew (Arcade Team Select). Each friend appears as a distinct pixel-art player. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "kart-racers",
+     "name": "Kart Racers",
+     "prompt": "Edit the uploaded photo into Game Night Crew (Kart Racers). Colourful race suits on the pit lane. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "game-show-finalists",
+     "name": "Game Show Finalists",
+     "prompt": "Edit the uploaded photo into Game Night Crew (Game Show Finalists). Neon podiums and buzzers. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "board-game-world",
+     "name": "Board Game World",
+     "prompt": "Edit the uploaded photo into Game Night Crew (Board Game World). Tiny friends on a giant game board. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "bowling-league",
+     "name": "Bowling League",
+     "prompt": "Edit the uploaded photo into Game Night Crew (Bowling League). Retro matching shirts and vintage bowling lanes. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    }
+   ],
+   "desc": "Each friend appears as a distinct pixel-art player",
+   "single": false
+  },
+  {
+   "key": "family-heirloom",
+   "num": 15,
+   "name": "Family Heirloom",
+   "catalogueName": "Family Heirloom",
+   "group": "Friends & family",
+   "existing": false,
+   "newPack": true,
+   "reveal": "cinema",
+   "anim": "maharaja",
+   "looks": [
+    {
+     "id": "hand-tinted-studio",
+     "name": "Hand-Tinted Studio",
+     "prompt": "Edit the uploaded photo into Family Heirloom (Hand-Tinted Studio). Soft hand-painted colours on a studio photo. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "courtyard-reunion",
+     "name": "Courtyard Reunion",
+     "prompt": "Edit the uploaded photo into Family Heirloom (Courtyard Reunion). Ancestral home with elders seated in front when present. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "festival-verandah",
+     "name": "Festival Verandah",
+     "prompt": "Edit the uploaded photo into Family Heirloom (Festival Verandah). Warm lamps, festive outfits and rangoli. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "garden-oil-painting",
+     "name": "Garden Oil Painting",
+     "prompt": "Edit the uploaded photo into Family Heirloom (Garden Oil Painting). Textured brushwork in a sunlit garden. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "grandparents-album",
+     "name": "Grandparents’ Album",
+     "prompt": "Edit the uploaded photo into Family Heirloom (Grandparents’ Album). Classic black-and-white family portrait. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    }
+   ],
+   "desc": "Soft hand-painted colours on a studio photo",
+   "single": false
+  },
+  {
+   "key": "tiny-family-worlds",
+   "num": 16,
+   "name": "Tiny Family Worlds",
+   "catalogueName": "Tiny Family Worlds",
+   "group": "Friends & family",
+   "existing": false,
+   "newPack": false,
+   "reveal": "cinema",
+   "anim": "poster",
+   "looks": [
+    {
+     "id": "clay-kitchen",
+     "name": "Clay Kitchen",
+     "prompt": "Edit the uploaded photo into Tiny Family Worlds (Clay Kitchen). Sculpt every guest and prop in tactile clay. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "paper-garden",
+     "name": "Paper Garden",
+     "prompt": "Edit the uploaded photo into Tiny Family Worlds (Paper Garden). Build faces, outfits and flowers from layered paper. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "miniature-train-journey",
+     "name": "Miniature Train Journey",
+     "prompt": "Edit the uploaded photo into Tiny Family Worlds (Miniature Train Journey). Handcrafted railway carriage. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "snow-globe-village",
+     "name": "Snow Globe Village",
+     "prompt": "Edit the uploaded photo into Tiny Family Worlds (Snow Globe Village). Guests inside a snowy miniature globe. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "toy-town-picnic",
+     "name": "Toy Town Picnic",
+     "prompt": "Edit the uploaded photo into Tiny Family Worlds (Toy Town Picnic). Toy-like family around an oversized picnic. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    }
+   ],
+   "desc": "Sculpt every guest and prop in tactile clay",
+   "single": false
+  },
+  {
+   "key": "comic-book-caricature",
+   "num": 17,
+   "name": "Comic Book Caricature",
+   "catalogueName": "Comic Book Caricature",
+   "group": "Caricature collection",
+   "existing": false,
+   "newPack": true,
+   "reveal": "lines",
+   "anim": "graffiti",
+   "looks": [
+    {
+     "id": "retro-pop-art",
+     "name": "Retro Pop Art",
+     "prompt": "Edit the uploaded photo into Comic Book Caricature (Retro Pop Art). Saturated halftones and thick ink. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "sunday-funnies",
+     "name": "Sunday Funnies",
+     "prompt": "Edit the uploaded photo into Comic Book Caricature (Sunday Funnies). Short funny newspaper comic sequence. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "manga-reaction",
+     "name": "Manga Reaction",
+     "prompt": "Edit the uploaded photo into Comic Book Caricature (Manga Reaction). Speed lines and exaggerated reactions. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "noir-detective",
+     "name": "Noir Detective",
+     "prompt": "Edit the uploaded photo into Comic Book Caricature (Noir Detective). Shadowy monochrome parody. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "comic-cover",
+     "name": "Comic Cover",
+     "prompt": "Edit the uploaded photo into Comic Book Caricature (Comic Cover). One bold wide cover with all guest faces visible. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    }
+   ],
+   "desc": "Saturated halftones and thick ink",
+   "single": false
+  },
+  {
+   "key": "live-artist-caricature",
+   "num": 18,
+   "name": "Live Artist Caricature",
+   "catalogueName": "Live Artist Caricature",
+   "group": "Caricature collection",
+   "existing": false,
+   "newPack": false,
+   "reveal": "lines",
+   "anim": "headshot",
+   "looks": [
+    {
+     "id": "brush-pen",
+     "name": "Brush Pen",
+     "prompt": "Edit the uploaded photo into Live Artist Caricature (Brush Pen). Bold tapered ink strokes. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "graphite-sketch",
+     "name": "Graphite Sketch",
+     "prompt": "Edit the uploaded photo into Live Artist Caricature (Graphite Sketch). Silvery pencil shading. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "watercolour-wash",
+     "name": "Watercolour Wash",
+     "prompt": "Edit the uploaded photo into Live Artist Caricature (Watercolour Wash). Soft pigment blooms. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "pastel-chalk",
+     "name": "Pastel Chalk",
+     "prompt": "Edit the uploaded photo into Live Artist Caricature (Pastel Chalk). Dusty colour and paper texture. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "colour-pencil",
+     "name": "Colour Pencil",
+     "prompt": "Edit the uploaded photo into Live Artist Caricature (Colour Pencil). Warm visible crosshatching. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    }
+   ],
+   "desc": "Bold tapered ink strokes",
+   "single": false
+  },
+  {
+   "key": "group-gag-caricature",
+   "num": 19,
+   "name": "Group Gag Caricature",
+   "catalogueName": "Group Gag Caricature",
+   "group": "Caricature collection",
+   "existing": false,
+   "newPack": false,
+   "reveal": "lines",
+   "anim": "caricature",
+   "looks": [
+    {
+     "id": "tiny-auto-ride",
+     "name": "Tiny Auto Ride",
+     "prompt": "Edit the uploaded photo into Group Gag Caricature (Tiny Auto Ride). Playful caricature in a cartoon auto-rickshaw. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "wedding-dance-floor",
+     "name": "Wedding Dance Floor",
+     "prompt": "Edit the uploaded photo into Group Gag Caricature (Wedding Dance Floor). Different funny dance poses. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "office-chai-break",
+     "name": "Office Chai Break",
+     "prompt": "Edit the uploaded photo into Group Gag Caricature (Office Chai Break). Guests react to an oversized chai cup. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "family-picnic-chaos",
+     "name": "Family Picnic Chaos",
+     "prompt": "Edit the uploaded photo into Group Gag Caricature (Family Picnic Chaos). A playful picnic mishap. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "road-trip-crew",
+     "name": "Road Trip Crew",
+     "prompt": "Edit the uploaded photo into Group Gag Caricature (Road Trip Crew). Funny poses around a colourful road-trip van. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    }
+   ],
+   "desc": "Playful caricature in a cartoon auto-rickshaw",
+   "single": false
+  },
+  {
+   "key": "portraits-come-alive",
+   "num": 20,
+   "name": "Portraits Come Alive",
+   "catalogueName": "Portraits Come Alive",
+   "group": "Creative transformations",
+   "existing": false,
+   "newPack": false,
+   "reveal": "cinema",
+   "anim": "maharaja",
+   "looks": [
+    {
+     "id": "gallery-wall",
+     "name": "Gallery Wall",
+     "prompt": "Edit the uploaded photo into Portraits Come Alive (Gallery Wall). Guests lean out of gilded picture frames. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Give each guest exactly one frame."
+    },
+    {
+     "id": "palace-frames",
+     "name": "Palace Frames",
+     "prompt": "Edit the uploaded photo into Portraits Come Alive (Palace Frames). Guests interact across carved palace arches. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Give each guest exactly one frame."
+    },
+    {
+     "id": "retro-tv-wall",
+     "name": "Retro TV Wall",
+     "prompt": "Edit the uploaded photo into Portraits Come Alive (Retro TV Wall). Guests emerge from CRT screens. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Give each guest exactly one frame."
+    },
+    {
+     "id": "festival-windows",
+     "name": "Festival Windows",
+     "prompt": "Edit the uploaded photo into Portraits Come Alive (Festival Windows). Guests interact across decorated windows. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Give each guest exactly one frame."
+    },
+    {
+     "id": "album-pop-out",
+     "name": "Album Pop-Out",
+     "prompt": "Edit the uploaded photo into Portraits Come Alive (Album Pop-Out). Guests step out of album photos. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Give each guest exactly one frame."
+    }
+   ],
+   "desc": "Guests lean out of gilded picture frames",
+   "single": false
+  },
+  {
+   "key": "shadow-puppet-theatre",
+   "num": 21,
+   "name": "Shadow Puppet Theatre",
+   "catalogueName": "Shadow Puppet Theatre",
+   "group": "Creative transformations",
+   "existing": false,
+   "newPack": false,
+   "reveal": "lines",
+   "anim": "headshot",
+   "looks": [
+    {
+     "id": "village-fair",
+     "name": "Village Fair",
+     "prompt": "Edit the uploaded photo into Shadow Puppet Theatre (Village Fair). Backlit leather puppets at a fair. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "moonlit-folktale",
+     "name": "Moonlit Folktale",
+     "prompt": "Edit the uploaded photo into Shadow Puppet Theatre (Moonlit Folktale). Translucent puppets against moonlit cloth. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "wedding-procession",
+     "name": "Wedding Procession",
+     "prompt": "Edit the uploaded photo into Shadow Puppet Theatre (Wedding Procession). Puppets with ceremonial props. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "festival-dance",
+     "name": "Festival Dance",
+     "prompt": "Edit the uploaded photo into Shadow Puppet Theatre (Festival Dance). Articulated puppets in festive dance poses. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "forest-fable",
+     "name": "Forest Fable",
+     "prompt": "Edit the uploaded photo into Shadow Puppet Theatre (Forest Fable). Puppets interacting with woodland animals. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    }
+   ],
+   "desc": "Backlit leather puppets at a fair",
+   "single": false
+  },
+  {
+   "key": "build-your-world",
+   "num": 22,
+   "name": "Build Your World",
+   "catalogueName": "Build Your World",
+   "group": "Creative transformations",
+   "existing": false,
+   "newPack": false,
+   "reveal": "cinema",
+   "anim": "poster",
+   "looks": [
+    {
+     "id": "brick-mandap",
+     "name": "Brick Mandap",
+     "prompt": "Edit the uploaded photo into Build Your World (Brick Mandap). Entire wedding scene and guests built from toy bricks. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "brick-birthday",
+     "name": "Brick Birthday",
+     "prompt": "Edit the uploaded photo into Build Your World (Brick Birthday). Brick cake and colourful guests. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "brick-hyderabad",
+     "name": "Brick Hyderabad",
+     "prompt": "Edit the uploaded photo into Build Your World (Brick Hyderabad). Toy-brick Charminar and market. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "brick-office",
+     "name": "Brick Office",
+     "prompt": "Edit the uploaded photo into Build Your World (Brick Office). Brick desks and identifiable team figures. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    },
+    {
+     "id": "brick-carnival",
+     "name": "Brick Carnival",
+     "prompt": "Edit the uploaded photo into Build Your World (Brick Carnival). Brick rides and bright attractions. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests."
+    }
+   ],
+   "desc": "Entire wedding scene and guests built from toy bricks",
+   "single": false
+  },
+  {
+   "key": "surreal-reflections",
+   "num": 23,
+   "name": "Surreal Reflections",
+   "catalogueName": "Surreal Reflections",
+   "group": "Creative transformations",
+   "existing": false,
+   "newPack": false,
+   "reveal": "cinema",
+   "anim": "poster",
+   "looks": [
+    {
+     "id": "palace-mirror",
+     "name": "Palace Mirror",
+     "prompt": "Edit the uploaded photo into Surreal Reflections (Palace Mirror). Reflection reveals regal outfits and a palace. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Show one matching reflection per guest, with the transformation inside the reflection."
+    },
+    {
+     "id": "ocean-portal",
+     "name": "Ocean Portal",
+     "prompt": "Edit the uploaded photo into Surreal Reflections (Ocean Portal). Reflection reveals an underwater world. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Show one matching reflection per guest, with the transformation inside the reflection."
+    },
+    {
+     "id": "carnival-mirror",
+     "name": "Carnival Mirror",
+     "prompt": "Edit the uploaded photo into Surreal Reflections (Carnival Mirror). Reflection reveals a masquerade carnival. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Show one matching reflection per guest, with the transformation inside the reflection."
+    },
+    {
+     "id": "rain-puddle-world",
+     "name": "Rain Puddle World",
+     "prompt": "Edit the uploaded photo into Surreal Reflections (Rain Puddle World). Puddle reveals an upside- down fantasy city. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Show one matching reflection per guest, with the transformation inside the reflection."
+    },
+    {
+     "id": "starlight-reflection",
+     "name": "Starlight Reflection",
+     "prompt": "Edit the uploaded photo into Surreal Reflections (Starlight Reflection). Reflection shows celestial costumes and galaxies. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Show one matching reflection per guest, with the transformation inside the reflection."
+    }
+   ],
+   "desc": "Reflection reveals regal outfits and a palace",
+   "single": false
+  },
+  {
+   "key": "human-postcard",
+   "num": 24,
+   "name": "Human Postcard",
+   "catalogueName": "Human Postcard",
+   "group": "Creative transformations",
+   "existing": false,
+   "newPack": false,
+   "reveal": "cinema",
+   "anim": "poster",
+   "looks": [
+    {
+     "id": "hyderabad",
+     "name": "Hyderabad",
+     "prompt": "Edit the uploaded photo into Human Postcard (Hyderabad). Guests interact with giant HYD letters. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Use the supplied event lettering exactly."
+    },
+    {
+     "id": "wedding-initials",
+     "name": "Wedding Initials",
+     "prompt": "Edit the uploaded photo into Human Postcard (Wedding Initials). Guests pose around oversized couple initials. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Use the supplied event lettering exactly."
+    },
+    {
+     "id": "birthday-age",
+     "name": "Birthday Age",
+     "prompt": "Edit the uploaded photo into Human Postcard (Birthday Age). Guests interact with giant age numerals. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Use the supplied event lettering exactly."
+    },
+    {
+     "id": "team-name",
+     "name": "Team Name",
+     "prompt": "Edit the uploaded photo into Human Postcard (Team Name). Guests lean against giant team-name letters. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Use the supplied event lettering exactly."
+    },
+    {
+     "id": "family-surname",
+     "name": "Family Surname",
+     "prompt": "Edit the uploaded photo into Human Postcard (Family Surname). Guests gather around a sculptural surname. Show exactly {people_count} guests from the photo, each with recognizable features and a clear face. For five or six, use a wide composition. Add no extra guests. Use the supplied event lettering exactly."
+    }
+   ],
+   "needsLettering": true,
+   "desc": "Guests interact with giant HYD letters",
+   "single": false
+  }
+ ]
+}
