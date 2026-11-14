@@ -47,6 +47,11 @@ class _LayoutsScreenState extends State<LayoutsScreen> {
       builder: (c) => SafeArea(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           ListTile(
+              leading: const Icon(Icons.view_column, color: Color(0xFFF47B20)),
+              title: const Text('Magnets 2x (2.5x3.5 in) on 6x4'),
+              subtitle: const Text('1 shot = 2 magnets, crop marks + bleed'),
+              onTap: () => Navigator.pop(c, PhotoLayout.twoMagnets())),
+          ListTile(
               leading: const Icon(Icons.grid_view),
               title: const Text('6 magnets (2x2) on 4x6'),
               onTap: () => Navigator.pop(c, PhotoLayout.sixMagnets())),
@@ -66,7 +71,7 @@ class _LayoutsScreenState extends State<LayoutsScreen> {
       ),
     );
     if (preset == null) return;
-    final name = await _askName('Template ${e.layouts.length + 1}');
+    final name = await _askName(preset.name == 'Template' ? 'Template ${e.layouts.length + 1}' : preset.name);
     preset.name = (name == null || name.isEmpty) ? 'Template ${e.layouts.length + 1}' : name;
     setState(() => e.layouts.add(preset));
     await EventStore.instance.save();
@@ -82,6 +87,8 @@ class _LayoutsScreenState extends State<LayoutsScreen> {
       case 'duplicate':
         final c = l.copy()..name = '${l.name} copy';
         setState(() => e.layouts.insert(i + 1, c));
+      case 'pair':
+        setState(() => l.pairMode = !l.pairMode);
       case 'delete':
         if (e.layouts.length == 1) return;
         setState(() {
@@ -139,7 +146,7 @@ class _LayoutsScreenState extends State<LayoutsScreen> {
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Text(l.name, maxLines: 1, overflow: TextOverflow.ellipsis,
                               style: const TextStyle(fontWeight: FontWeight.w600)),
-                          Text('${l.paper.name} · ${l.shotCount} shot(s)',
+                          Text('${l.paper.name} · ${l.shotCount} shot(s)${l.pairActive ? ' · pair' : ''}',
                               style: const TextStyle(fontSize: 12, color: Colors.white60)),
                         ]),
                       ),
@@ -148,6 +155,9 @@ class _LayoutsScreenState extends State<LayoutsScreen> {
                         itemBuilder: (_) => [
                           const PopupMenuItem(value: 'rename', child: Text('Rename')),
                           const PopupMenuItem(value: 'duplicate', child: Text('Duplicate')),
+                          PopupMenuItem(
+                              value: 'pair',
+                              child: Text(l.pairMode ? 'Pair mode: ON (tap to turn off)' : 'Pair mode: next 2 shots on one sheet')),
                           if (e.layouts.length > 1) const PopupMenuItem(value: 'delete', child: Text('Delete')),
                         ],
                       ),

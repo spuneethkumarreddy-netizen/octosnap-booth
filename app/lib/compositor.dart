@@ -55,7 +55,8 @@ class SheetCompositor {
         case ElementType.photo:
           if (decoded.isEmpty) break;
           final img = decoded[(e.photoNumber - 1).clamp(0, decoded.length - 1)];
-          drawCover(canvas, img, rect, e.rotation,
+          final bleed = layout.bleedMm / 25.4 * dpi;
+          drawCover(canvas, img, rect.inflate(bleed), e.rotation,
               mirror: event.camera.mirrorPhoto, quarterTurns: event.camera.quarterTurns);
           break;
         case ElementType.image:
@@ -80,6 +81,7 @@ class SheetCompositor {
     }
 
     if (event.print.cutMarks) _drawCutMarks(canvas, layout, dpi, wPx.toDouble(), hPx.toDouble());
+    if (layout.cropMarks) _drawCropMarks(canvas, layout, dpi);
 
     final picture = recorder.endRecording();
     final image = await picture.toImage(wPx, hPx);
@@ -108,6 +110,30 @@ class SheetCompositor {
       if (y <= 1 || y >= h - 1) continue;
       canvas.drawLine(Offset(0, y), Offset(len, y), paint);
       canvas.drawLine(Offset(w - len, y), Offset(w, y), paint);
+    }
+  }
+
+  /// Crop marks at the four trim corners of every photo box, starting just outside the bleed.
+  static void _drawCropMarks(Canvas canvas, PhotoLayout layout, double dpi) {
+    final mm = dpi / 25.4;
+    final start = layout.bleedMm * mm + 0.5 * mm; // gap after the bleed edge
+    final len = 3 * mm;
+    final paint = Paint()
+      ..color = const Color(0xFF333333)
+      ..strokeWidth = math.max(1, dpi / 300);
+    for (final e in layout.elements) {
+      if (e.type != ElementType.photo) continue;
+      final l = e.x * dpi, t = e.y * dpi, r = (e.x + e.w) * dpi, b = (e.y + e.h) * dpi;
+      for (final x in [l, r]) {
+        final dir = x == l ? -1 : 1;
+        for (final y in [t, b]) {
+          final dy = y == t ? -1 : 1;
+          // horizontal mark on the trim line y, outside the box
+          canvas.drawLine(Offset(x + dir * start, y), Offset(x + dir * (start + len), y), paint);
+          // vertical mark on the trim line x, outside the box
+          canvas.drawLine(Offset(x, y + dy * start), Offset(x, y + dy * (start + len)), paint);
+        }
+      }
     }
   }
 

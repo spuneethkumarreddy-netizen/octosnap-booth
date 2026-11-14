@@ -50,6 +50,33 @@ class _CaptureSettingsScreenState extends State<CaptureSettingsScreen> {
           subtitle: const Text('Comes from the highest photo number in the photo layout.'),
         ),
         const Divider(),
+        SwitchListTile(
+          secondary: const Icon(Icons.directions_walk, color: brandOrange),
+          title: const Text('Roaming (instant)'),
+          subtitle: const Text('No welcome screen or countdown. Live view full screen; tap anywhere, '
+              'press the camera shutter, a clicker or a volume key to take the photo.'),
+          value: s.roaming,
+          onChanged: (v) => setState(() => s.roaming = v),
+        ),
+        if (s.roaming)
+          SwitchListTile(
+            title: const Text('Auto-accept / no review'),
+            subtitle: const Text('Roaming: skip Retake/Keep and go straight to the sheet + print'),
+            value: s.autoAccept,
+            onChanged: (v) => setState(() => s.autoAccept = v),
+          ),
+        SwitchListTile(
+          secondary: const Icon(Icons.view_column, color: brandOrange),
+          title: const Text('Pair mode: next 2 shots on one sheet'),
+          subtitle: Text(widget.event.layout.shotCount == 1 &&
+                  widget.event.layout.elements.where((x) => x.type == ElementType.photo).length >= 2
+              ? 'Template "${widget.event.layout.name}": first shot waits, second shot completes the sheet and prints. '
+                  'Operator can force-print a single from the booth.'
+              : 'Needs a 1-shot template with 2 or more photo boxes (e.g. Magnets 2x).'),
+          value: widget.event.layout.pairMode,
+          onChanged: (v) => setState(() => widget.event.layout.pairMode = v),
+        ),
+        const Divider(),
         _slider('First countdown', s.firstCountdown.toDouble(), 0, 10, 10, 's', (v) => s.firstCountdown = v.round()),
         _slider('Countdown for next shots', s.countdown.toDouble(), 0, 10, 10, 's', (v) => s.countdown = v.round()),
         _slider('Show each photo for', s.displaySeconds, 0, 6, 12, 's', (v) => s.displaySeconds = v),

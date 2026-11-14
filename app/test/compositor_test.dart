@@ -32,4 +32,40 @@ void main() {
     expect(back.layout.paper.name, '2x6');
     expect(back.layout.shotCount, 3);
   });
+
+  test('Magnets 2x preset: 6x4 landscape, two 2.5x3.5 boxes centred, 1 shot', () async {
+    final l = PhotoLayout.twoMagnets();
+    expect(l.paper.w, 6);
+    expect(l.paper.h, 4);
+    final boxes = l.elements.where((x) => x.type == ElementType.photo).toList();
+    expect(boxes.length, 2);
+    for (final b in boxes) {
+      expect(b.w, 2.5);
+      expect(b.h, 3.5);
+    }
+    expect(boxes.first.x, closeTo(6 - (boxes.last.x + 2.5), 1e-9)); // centred
+    expect(boxes.first.y, closeTo(0.25, 1e-9));
+    expect(l.shotCount, 1);
+    expect(l.bleedMm, 1.5);
+    final ev = BoothEvent(id: 'm', name: 'Magnets', date: DateTime(2026, 11, 14), layout: l);
+    final png = await SheetCompositor.compose(event: ev, shots: [Uint8List.fromList(await _shot())]);
+    final img = (await (await ui.instantiateImageCodec(png)).getNextFrame()).image;
+    expect(img.width, 1800);
+    expect(img.height, 1200);
+  });
+
+  test('pair mode: box 1 = shot 1, box 2 = shot 2; json keeps settings', () {
+    final l = PhotoLayout.twoMagnets()..pairMode = true;
+    expect(l.pairActive, true);
+    final p = l.pairLayout();
+    expect(p.elements.map((e) => e.photoNumber).toList(), [1, 2]);
+    expect(p.shotCount, 2);
+    final back = PhotoLayout.fromJson(l.toJson());
+    expect(back.pairMode, true);
+    expect(back.cropMarks, true);
+    final cs = CaptureSettings.fromJson(CaptureSettings(roaming: true, autoAccept: false).toJson());
+    expect(cs.roaming, true);
+    expect(cs.autoAccept, false);
+    expect(CaptureSettings.fromJson({}).autoAccept, true);
+  });
 }

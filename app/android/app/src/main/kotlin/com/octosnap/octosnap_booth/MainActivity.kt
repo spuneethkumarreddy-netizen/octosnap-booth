@@ -25,13 +25,14 @@ class MainActivity : FlutterActivity() {
                         "startLiveView" -> { cam().startLiveView(); null }
                         "liveFrame" -> cam().liveViewFrame()
                         "capture" -> cam().capture()
+                        "pollExternal" -> cam().pollExternal()
                         "close" -> { dslr?.close(); dslr = null; null }
                         "isConnected" -> dslr?.isAttached() == true
                         else -> throw UnsupportedOperationException(call.method)
                     }
                     runOnUiThread { result.success(value) }
                 } catch (e: Exception) {
-                    if (call.method != "liveFrame" && call.method != "connect") {
+                    if (call.method != "liveFrame" && call.method != "connect" && call.method != "pollExternal") {
                         // a failed transaction usually means the cable was pulled
                         if (dslr?.isAttached() != true) { dslr?.close(); dslr = null }
                     }

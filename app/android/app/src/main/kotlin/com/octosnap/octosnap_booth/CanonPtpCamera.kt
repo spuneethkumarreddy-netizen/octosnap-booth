@@ -33,6 +33,7 @@ class CanonPtpCamera private constructor(
     val name: String = listOfNotNull(device.manufacturerName, device.productName).joinToString(" ").ifBlank { "Canon camera" }
     private var txId = 0
     private var liveOn = false
+    private val seenHandles = HashSet<Int>()
 
     companion object {
         private const val ACTION_PERMISSION = "com.octosnap.USB_PERMISSION"
@@ -69,6 +70,11 @@ class CanonPtpCamera private constructor(
         private const val PROP_EVF_MODE = 0xD1B3
         private const val EV_OBJECT_ADDED = 0xC181
         private const val EV_OBJECT_ADDED64 = 0xC1A7
+        private const val EV_REQUEST_TRANSFER = 0xC186
+        private const val EV_REQUEST_TRANSFER64 = 0xC1A9
+        private const val EV_STD_OBJECT_ADDED = 0x4002
+        // Object formats that are never JPEG (skip download): CR2, CRW, CR3, MOV/MP4
+        private val SKIP_FORMATS = setOf(0xB103, 0xB101, 0xB108, 0x300D, 0xB982)
 
         /** Finds the camera, asks USB permission if needed, opens a PTP session. */
         fun open(ctx: Context): CanonPtpCamera {
@@ -206,19 +212,49 @@ class CanonPtpCamera private constructor(
             if (rc != RC_OK) throw IllegalStateException("Shutter failed 0x%04X (check focus / lens / SD card)".format(rc))
         }
         val deadline = System.currentTimeMillis() + 15000
-        var jpeg: ByteArray? = null
         while (System.currentTimeMillis() < deadline) {
-            for (handle in newObjects()) {
-                val obj = transaction(OP_GET_OBJECT, intArrayOf(handle))
-                transaction(OP_EOS_TRANSFER_COMPLETE, intArrayOf(handle))
-                val bytes = obj.data
-                if (obj.code == RC_OK && bytes != null && bytes.size > 2 &&
-                    bytes[0] == 0xFF.toByte() && bytes[1] == 0xD8.toByte()) jpeg = bytes
-            }
-            if (jpeg != null) return jpeg
+            val jpeg = downloadNew()
+            if (jpeg != null) { resumeLiveView(); return jpeg }
             Thread.sleep(80)
         }
         throw IllegalStateException("Camera took the photo but sent no JPEG (set image quality to JPEG, not RAW only)")
+    }
+
+    /**
+     * Shutter pressed ON THE CAMERA: polls Canon events once and, if the camera added a new
+     * photo (sent to the host because capture destination = PC), downloads and returns the JPEG.
+     * Returns null when nothing new. Live view is re-enabled afterwards.
+     */
+    fun pollExternal(): ByteArray? {
+        val jpeg = downloadNew() ?: return null
+        resumeLiveView()
+        return jpeg
+    }
+
+    private fun resumeLiveView() {
+        if (!liveOn) return
+        try {
+            setProp(PROP_EVF_MODE, 1)
+            setProp(PROP_EVF_OUTPUT, 2)
+        } catch (_: Exception) {}
+    }
+
+    /** Downloads every new object from one GetEvent poll; returns the last JPEG among them. */
+    private fun downloadNew(): ByteArray? {
+        var jpeg: ByteArray? = null
+        for ((handle, format) in newObjects()) {
+            if (!seenHandles.add(handle)) continue
+            if (format in SKIP_FORMATS) {
+                try { transaction(OP_EOS_TRANSFER_COMPLETE, intArrayOf(handle)) } catch (_: Exception) {}
+                continue
+            }
+            val obj = transaction(OP_GET_OBJECT, intArrayOf(handle))
+            try { transaction(OP_EOS_TRANSFER_COMPLETE, intArrayOf(handle)) } catch (_: Exception) {}
+            val bytes = obj.data
+            if (obj.code == RC_OK && bytes != null && bytes.size > 2 &&
+                bytes[0] == 0xFF.toByte() && bytes[1] == 0xD8.toByte()) jpeg = bytes
+        }
+        return jpeg
     }
 
     fun close() {
@@ -235,16 +271,25 @@ class CanonPtpCamera private constructor(
 
     private fun drainEvents() { try { transaction(OP_EOS_GET_EVENT, intArrayOf()) } catch (_: Exception) {} }
 
-    private fun newObjects(): List<Int> {
+    /** (handle, objectFormat) of objects announced by one Canon GetEvent (0x9116) poll. */
+    private fun newObjects(): List<Pair<Int, Int>> {
         val r = transaction(OP_EOS_GET_EVENT, intArrayOf())
         val d = r.data ?: return emptyList()
-        val out = ArrayList<Int>()
+        val out = ArrayList<Pair<Int, Int>>()
         var off = 0
         while (off + 8 <= d.size) {
             val len = u32(d, off)
             val type = u32(d, off + 4)
-            if (len < 8 || (len == 8 && type == 0)) break
-            if ((type == EV_OBJECT_ADDED || type == EV_OBJECT_ADDED64) && off + 12 <= d.size) out.add(u32(d, off + 8))
+            if (len < 8 || (len == 8 && type == 0) || off + len > d.size) break
+            val isObj = type == EV_OBJECT_ADDED || type == EV_OBJECT_ADDED64 ||
+                type == EV_REQUEST_TRANSFER || type == EV_REQUEST_TRANSFER64 || type == EV_STD_OBJECT_ADDED
+            if (isObj && off + 12 <= d.size) {
+                val handle = u32(d, off + 8)
+                // ObjectAddedEx: format at +0x10; RequestObjectTransfer: at +0x0C (libgphoto2 layout)
+                val fOff = if (type == EV_REQUEST_TRANSFER || type == EV_REQUEST_TRANSFER64) 12 else 16
+                val format = if (len >= fOff + 2) u16(d, off + fOff) else 0
+                if (out.none { it.first == handle }) out.add(handle to format)
+            }
             off += len
         }
         return out

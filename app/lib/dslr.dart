@@ -23,6 +23,9 @@ class Dslr {
     return b;
   }
 
+  /// Photo taken with the CAMERA'S OWN shutter button (sent to the phone), or null if none.
+  static Future<Uint8List?> pollExternal() => _ch.invokeMethod<Uint8List>('pollExternal');
+
   static Future<bool> isConnected() async => (await _ch.invokeMethod<bool>('isConnected')) ?? false;
 
   static Future<void> close() async {

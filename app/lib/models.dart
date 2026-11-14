@@ -90,9 +90,39 @@ class PhotoLayout {
   int background; // ARGB
   String? templatePath; // full-sheet PNG drawn ON TOP of photos (transparent windows)
   List<LayoutElement> elements;
+  /// Photos are drawn this many mm larger than each photo box on every side (bleed for a magnet cutter).
+  double bleedMm;
+  /// Crop marks at every photo box's trim corners (always printed for this template).
+  bool cropMarks;
+  /// Pair mode: two guests share one sheet. The first shot waits; the next shot fills the
+  /// second photo box and the sheet prints. Only for 1-shot templates with 2+ photo boxes.
+  bool pairMode;
 
-  PhotoLayout({this.name = 'Template', required this.paper, this.background = 0xFFFFFFFF, this.templatePath, List<LayoutElement>? elements})
-      : elements = elements ?? [];
+  PhotoLayout({
+    this.name = 'Template',
+    required this.paper,
+    this.background = 0xFFFFFFFF,
+    this.templatePath,
+    List<LayoutElement>? elements,
+    this.bleedMm = 0,
+    this.cropMarks = false,
+    this.pairMode = false,
+  }) : elements = elements ?? [];
+
+  /// True when pair mode applies to this template.
+  bool get pairActive =>
+      pairMode && shotCount == 1 && elements.where((e) => e.type == ElementType.photo).length >= 2;
+
+  /// Copy for a pair-mode sheet: photo boxes in reading order alternate shot 1 / shot 2.
+  PhotoLayout pairLayout() {
+    final c = copy()..pairMode = false;
+    final boxes = c.elements.where((e) => e.type == ElementType.photo).toList()
+      ..sort((a, b) => (a.y - b.y).abs() > 0.05 ? a.y.compareTo(b.y) : a.x.compareTo(b.x));
+    for (var i = 0; i < boxes.length; i++) {
+      boxes[i].photoNumber = i < boxes.length / 2 ? 1 : 2;
+    }
+    return c;
+  }
 
   /// Width/height of the first photo box filled by shot [n] (1-based), or null.
   double? boxAspectForShot(int n) {
@@ -122,6 +152,9 @@ class PhotoLayout {
         'background': background,
         'templatePath': templatePath,
         'elements': elements.map((e) => e.toJson()).toList(),
+        'bleedMm': bleedMm,
+        'cropMarks': cropMarks,
+        'pairMode': pairMode,
       };
 
   factory PhotoLayout.fromJson(Map<String, dynamic> j) => PhotoLayout(
@@ -132,7 +165,29 @@ class PhotoLayout {
         elements: (j['elements'] as List? ?? [])
             .map((e) => LayoutElement.fromJson(e as Map<String, dynamic>))
             .toList(),
+        bleedMm: (j['bleedMm'] as num? ?? 0).toDouble(),
+        cropMarks: j['cropMarks'] as bool? ?? false,
+        pairMode: j['pairMode'] as bool? ?? false,
       );
+
+  /// Two 2.5 x 3.5 in portrait magnets side by side on 6x4 landscape, centred,
+  /// 1.5 mm bleed + crop marks at the trim (for a 2.5x3.5 magnet cutter).
+  /// Default: one shot fills both boxes (1 shot = 2 magnets).
+  static PhotoLayout twoMagnets() {
+    const w = 2.5, h = 3.5, gap = 0.4;
+    const x0 = (6 - (2 * w + gap)) / 2; // 0.3 in
+    const y0 = (4 - h) / 2; // 0.25 in
+    return PhotoLayout(
+      name: 'Magnets 2x (2.5x3.5) on 6x4',
+      paper: PaperSize.presets[1],
+      bleedMm: 1.5,
+      cropMarks: true,
+      elements: [
+        LayoutElement(type: ElementType.photo, x: x0, y: y0, w: w, h: h, photoNumber: 1),
+        LayoutElement(type: ElementType.photo, x: x0 + w + gap, y: y0, w: w, h: h, photoNumber: 1),
+      ],
+    );
+  }
 
   /// Six 2x2 magnets of ONE shot on a 4x6 sheet.
   static PhotoLayout sixMagnets() => PhotoLayout(
@@ -243,7 +298,11 @@ class CaptureSettings {
   bool showCropGuide; // darken the area outside the photo box during countdown
   bool sounds; // countdown ticks + shutter click
   String exitPin; // operator PIN to leave the booth ('' = no PIN)
+  bool roaming; // Roaming (instant): live view full screen, tap anywhere / camera shutter = capture
+  bool autoAccept; // roaming: skip review, go straight to compose + print
   CaptureSettings({
+    this.roaming = false,
+    this.autoAccept = true,
     this.showCropGuide = true,
     this.sounds = true,
     this.exitPin = '',
@@ -264,6 +323,8 @@ class CaptureSettings {
         'showCropGuide': showCropGuide,
         'sounds': sounds,
         'exitPin': exitPin,
+        'roaming': roaming,
+        'autoAccept': autoAccept,
       };
   factory CaptureSettings.fromJson(Map<String, dynamic> j) => CaptureSettings(
         firstCountdown: j['firstCountdown'] as int? ?? 5,
@@ -275,6 +336,8 @@ class CaptureSettings {
         showCropGuide: j['showCropGuide'] as bool? ?? true,
         sounds: j['sounds'] as bool? ?? true,
         exitPin: j['exitPin'] as String? ?? '',
+        roaming: j['roaming'] as bool? ?? false,
+        autoAccept: j['autoAccept'] as bool? ?? true,
       );
 }
 

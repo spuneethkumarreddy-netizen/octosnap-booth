@@ -50,6 +50,32 @@ class _BoothScreenState extends State<BoothScreen> {
   int _session = 0; // bumped to cancel a running session
   final Map<PhotoLayout, Future<Uint8List>> _thumbs = {};
   int _homeLayout = 0; // operator's active template, restored after each guest session
+  // Build 9: roaming, camera-shutter trigger, pair mode
+  bool _roamBusy = false;
+  Uint8List? _lastSheet; // roaming: last sheet (thumbnail)
+  Uint8List? _pendingPair; // pair mode: first shot waiting for its partner
+  Uint8List? _externalShot; // photo from the camera's own shutter, consumed by a running session
+
+  static final _triggerKeys = <LogicalKeyboardKey>{
+    LogicalKeyboardKey.audioVolumeUp,
+    LogicalKeyboardKey.audioVolumeDown,
+    LogicalKeyboardKey.space,
+    LogicalKeyboardKey.enter,
+    LogicalKeyboardKey.numpadEnter,
+    LogicalKeyboardKey.pageDown,
+    LogicalKeyboardKey.pageUp,
+    LogicalKeyboardKey.arrowRight,
+    LogicalKeyboardKey.arrowLeft,
+    LogicalKeyboardKey.arrowUp,
+    LogicalKeyboardKey.arrowDown,
+    LogicalKeyboardKey.mediaPlayPause,
+    LogicalKeyboardKey.mediaPlay,
+    LogicalKeyboardKey.mediaTrackNext,
+    LogicalKeyboardKey.mediaTrackPrevious,
+    LogicalKeyboardKey.camera,
+    LogicalKeyboardKey.select,
+    LogicalKeyboardKey.gameButtonA,
+  };
 
   bool get _live => _alive && mounted;
 
@@ -61,8 +87,58 @@ class _BoothScreenState extends State<BoothScreen> {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     WakelockPlus.enable().catchError((_) {});
     _initCamera();
+    HardwareKeyboard.instance.addHandler(_onKey);
     WidgetsBinding.instance.addPostFrameCallback(
         (_) => _toast('Operator menu (edit / exit): press Back, or hold the top-left corner for 2 seconds'));
+  }
+
+  /// Bluetooth/USB clicker, keyboard or volume key = shutter.
+  bool _onKey(KeyEvent ev) {
+    if (ev is! KeyDownEvent || !_live) return false;
+    if (!(ModalRoute.of(context)?.isCurrent ?? false)) return false; // a dialog / editor is open
+    if (!_triggerKeys.contains(ev.logicalKey)) return false;
+    _trigger();
+    return true;
+  }
+
+  void _trigger() {
+    if (stage == _Stage.review) {
+      if (_reviewChoice?.isCompleted == false) _reviewChoice!.complete(true);
+      return;
+    }
+    if (e.capture.roaming) {
+      if (stage == _Stage.welcome) _roamCapture();
+      return;
+    }
+    if (stage == _Stage.welcome) {
+      _onStart();
+    } else if (stage == _Stage.done) {
+      _reset();
+    }
+  }
+
+  /// A photo arrived from the camera's own shutter button.
+  Future<void> _onExternalShot(Uint8List bytes) async {
+    if (!_live) return;
+    if (e.capture.roaming) {
+      var waited = 0;
+      while (_roamBusy && _live && waited++ < 100) {
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+      if (stage == _Stage.welcome) await _roamCapture(external: bytes);
+      return;
+    }
+    switch (stage) {
+      case _Stage.welcome:
+      case _Stage.choose:
+        if (stage == _Stage.choose) setState(() => stage = _Stage.welcome);
+        _homeLayout = e.activeLayout;
+        unawaited(_runSession(firstShot: bytes));
+      case _Stage.countdown:
+        _externalShot = bytes;
+      default:
+        _toast('Camera photo ignored (finish this session first)');
+    }
   }
 
   bool get _camReady => _dslr ? _liveFrame != null : (ctl?.value.isInitialized ?? false);
@@ -87,10 +163,21 @@ class _BoothScreenState extends State<BoothScreen> {
   /// Pulls live-view frames from the DSLR; falls back to built-in camera if it disconnects.
   Future<void> _liveLoop() async {
     var errors = 0;
+    var n = 0;
     while (_live && _dslr) {
       if (_dslrBusy) {
         await Future.delayed(const Duration(milliseconds: 50));
         continue;
+      }
+      // Every few frames: did the operator press the camera's own shutter?
+      if (++n % 3 == 0) {
+        try {
+          final x = await Dslr.pollExternal();
+          if (x != null && _live) {
+            if (e.capture.sounds) SystemSound.play(SystemSoundType.click);
+            unawaited(_onExternalShot(x));
+          }
+        } catch (_) {}
       }
       try {
         final f = await Dslr.liveFrame();
@@ -158,6 +245,7 @@ class _BoothScreenState extends State<BoothScreen> {
   @override
   void dispose() {
     _alive = false;
+    HardwareKeyboard.instance.removeHandler(_onKey);
     _exitTimer?.cancel();
     _idleTimer?.cancel();
     ctl?.dispose();
@@ -187,17 +275,19 @@ class _BoothScreenState extends State<BoothScreen> {
     _runSession();
   }
 
-  Future<void> _runSession() async {
-    if (!_camReady || stage != _Stage.welcome) return;
+  Future<void> _runSession({Uint8List? firstShot}) async {
+    if ((!_camReady && firstShot == null) || stage != _Stage.welcome) return;
     final my = ++_session;
     bool ok() => _live && my == _session;
-    final total = e.layout.shotCount;
+    final total = e.layout.pairActive ? 1 : e.layout.shotCount;
     final shots = <Uint8List>[];
+    _externalShot = null;
+    var pre = firstShot;
     for (shotIndex = 0; shotIndex < total && ok();) {
-      // countdown
-      final secs = shotIndex == 0 ? e.capture.firstCountdown : e.capture.countdown;
+      // countdown (skipped when the camera's shutter already delivered this shot)
+      final secs = pre != null ? 0 : (shotIndex == 0 ? e.capture.firstCountdown : e.capture.countdown);
       setState(() => stage = _Stage.countdown);
-      for (countdown = secs; countdown > 0 && ok(); countdown--) {
+      for (countdown = secs; countdown > 0 && ok() && _externalShot == null; countdown--) {
         setState(() {});
         if (e.capture.sounds) SystemSound.play(SystemSoundType.click);
         await _wait(1);
@@ -212,7 +302,10 @@ class _BoothScreenState extends State<BoothScreen> {
           SystemSound.play(SystemSoundType.click);
           HapticFeedback.mediumImpact();
         }
-        bytes = await _takePhoto();
+        final ext = pre ?? _externalShot;
+        pre = null;
+        _externalShot = null;
+        bytes = ext ?? await _takePhoto();
       } catch (err) {
         setState(() => flash = false);
         _toast('Capture failed: $err');
@@ -244,15 +337,13 @@ class _BoothScreenState extends State<BoothScreen> {
     if (!ok()) return;
     setState(() => stage = _Stage.processing);
     try {
-      final sheet = await SheetCompositor.compose(event: e, shots: shots);
-      final ts = DateTime.now().millisecondsSinceEpoch;
-      final dir = EventStore.instance.photosDir.path;
-      final sep = Platform.pathSeparator;
-      await File('$dir$sep${e.id}_${ts}_sheet.png').writeAsBytes(sheet);
-      for (var i = 0; i < shots.length; i++) {
-        await File('$dir$sep${e.id}_${ts}_shot${i + 1}.jpg').writeAsBytes(shots[i]);
-      }
+      final sheet = await _processShots(shots);
       if (!ok()) return;
+      if (sheet == null) {
+        // pair mode: first half saved, waits for the next guest
+        _reset();
+        return;
+      }
       setState(() {
         finalSheet = sheet;
         stage = _Stage.done;
@@ -266,8 +357,182 @@ class _BoothScreenState extends State<BoothScreen> {
     }
   }
 
-  Future<void> _print() async {
-    final s = finalSheet;
+  /// Builds and saves the sheet. Pair mode: returns null while the first shot waits for its partner.
+  Future<Uint8List?> _processShots(List<Uint8List> shots) async {
+    final layout = e.layout;
+    var use = shots;
+    PhotoLayout? lay;
+    if (layout.pairActive) {
+      if (_pendingPair == null) {
+        setState(() => _pendingPair = shots.first);
+        await _save(null, shots);
+        _toast('Photo saved. It prints together with the NEXT photo (pair mode).');
+        return null;
+      }
+      use = [_pendingPair!, shots.first];
+      lay = layout.pairLayout();
+      setState(() => _pendingPair = null);
+    }
+    final sheet = await SheetCompositor.compose(event: e, shots: use, layout: lay);
+    await _save(sheet, shots);
+    return sheet;
+  }
+
+  Future<void> _save(Uint8List? sheet, List<Uint8List> shots) async {
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    final dir = EventStore.instance.photosDir.path;
+    final sep = Platform.pathSeparator;
+    if (sheet != null) await File('$dir$sep${e.id}_${ts}_sheet.png').writeAsBytes(sheet);
+    for (var i = 0; i < shots.length; i++) {
+      await File('$dir$sep${e.id}_${ts}_shot${i + 1}.jpg').writeAsBytes(shots[i]);
+    }
+  }
+
+  /// Pair mode: operator prints the waiting single shot alone (it fills both boxes).
+  Future<void> _forcePrintPending() async {
+    final p = _pendingPair;
+    if (p == null) return;
+    setState(() => _pendingPair = null);
+    try {
+      final sheet = await SheetCompositor.compose(event: e, shots: [p]);
+      await _save(sheet, const []);
+      if (e.capture.roaming) setState(() => _lastSheet = sheet);
+      await _print(sheet);
+    } catch (err) {
+      _toast('Could not print single: $err');
+    }
+  }
+
+  /// Roaming: tap anywhere / shutter / clicker = photo now, no countdown.
+  Future<void> _roamCapture({Uint8List? external}) async {
+    if (_roamBusy || _suppressTap || stage != _Stage.welcome) return;
+    if (external == null && !_camReady) return;
+    final my = _session;
+    setState(() => _roamBusy = true);
+    try {
+      setState(() => flash = true);
+      if (e.capture.sounds && external == null) {
+        SystemSound.play(SystemSoundType.click);
+        HapticFeedback.mediumImpact();
+      }
+      final bytes = external ?? await _takePhoto();
+      await _wait(0.12);
+      if (!_live) return;
+      setState(() => flash = false);
+      if (!e.capture.autoAccept) {
+        setState(() {
+          reviewShot = bytes;
+          stage = _Stage.review;
+        });
+        _reviewChoice = Completer<bool>();
+        final keep = await _reviewChoice!.future.timeout(const Duration(seconds: 15), onTimeout: () => true);
+        if (!_live) return;
+        setState(() {
+          stage = _Stage.welcome;
+          reviewShot = null;
+        });
+        if (!keep || my != _session) return;
+      }
+      final sheet = await _processShots([bytes]);
+      if (!_live || sheet == null) return;
+      setState(() => _lastSheet = sheet);
+      unawaited(_print(sheet));
+    } catch (err) {
+      _toast('Capture failed: $err');
+    } finally {
+      if (_live) {
+        setState(() {
+          _roamBusy = false;
+          flash = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _showLastSheet() async {
+    final s = _lastSheet;
+    if (s == null) return;
+    final again = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        backgroundColor: const Color(0xFF26262D),
+        content: Image.memory(s, fit: BoxFit.contain),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Close')),
+          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Print again')),
+        ],
+      ),
+    );
+    if (again == true) await _print(s);
+  }
+
+  Widget _roamView() {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _roamCapture(),
+      child: Stack(fit: StackFit.expand, children: [
+        _preview(),
+        if (_roamBusy)
+          const Positioned(
+            top: 24,
+            left: 0,
+            right: 0,
+            child: Center(child: CircularProgressIndicator(color: brandOrange)),
+          ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 18,
+          child: IgnorePointer(
+            child: Center(
+              child: Text(
+                _camReady ? 'Tap anywhere to take a photo' : 'Connecting camera…',
+                style: const TextStyle(
+                    color: Colors.white70, fontSize: 16, shadows: [Shadow(blurRadius: 8, color: Colors.black)]),
+              ),
+            ),
+          ),
+        ),
+        if (_lastSheet != null)
+          Positioned(
+            right: 12,
+            bottom: 12,
+            child: SafeArea(
+              child: GestureDetector(
+                onTap: _showLastSheet,
+                child: Container(
+                  width: 84,
+                  decoration: BoxDecoration(border: Border.all(color: Colors.white70, width: 2)),
+                  child: Image.memory(_lastSheet!, fit: BoxFit.contain, gaplessPlayback: true),
+                ),
+              ),
+            ),
+          ),
+        if (_pendingPair != null) _pendingChip(),
+      ]),
+    );
+  }
+
+  /// Pair mode: "1 waiting" chip; operator holds it to print the single now.
+  Widget _pendingChip() => Positioned(
+        left: 12,
+        bottom: 12,
+        child: SafeArea(
+          child: GestureDetector(
+            onTap: () => _toast('1 photo waiting for its pair. Hold to print it alone.'),
+            onLongPress: _forcePrintPending,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(20)),
+              child: const Text('1 waiting · hold to print single',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+            ),
+          ),
+        ),
+      );
+
+  Future<void> _print([Uint8List? sheet]) async {
+    final s = sheet ?? finalSheet;
     if (s == null) return;
     try {
       await PrintService.printSheet(s, e);
@@ -368,6 +633,7 @@ class _BoothScreenState extends State<BoothScreen> {
             item(Icons.waving_hand, 'Edit welcome screen', 'welcome'),
             item(Icons.dashboard_customize, 'Edit templates', 'layouts'),
             item(Icons.timer, 'Capture settings', 'capture'),
+            if (_pendingPair != null) item(Icons.print_outlined, 'Print waiting single now (pair mode)', 'single'),
             item(Icons.print, 'Print setup', 'print'),
             item(Icons.logout, 'Exit booth', 'exit'),
           ]),
@@ -385,12 +651,15 @@ class _BoothScreenState extends State<BoothScreen> {
         screen = CaptureSettingsScreen(event: e);
       case 'print':
         screen = PrintSetupScreen(event: e);
+      case 'single':
+        await _forcePrintPending();
+        return;
       case 'exit':
         _session++;
         Navigator.pop(context);
         return;
     }
-    if (screen == null) return;
+    if (screen == null || !mounted) return;
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     await Navigator.push(context, MaterialPageRoute(builder: (_) => screen!));
     await EventStore.instance.save();
@@ -494,7 +763,7 @@ class _BoothScreenState extends State<BoothScreen> {
         ),
       ),
     );
-    final boxAr = e.layout.boxAspectForShot(shotIndex + 1);
+    final boxAr = e.layout.boxAspectForShot(e.capture.roaming ? 1 : shotIndex + 1);
     if (!guide || !e.capture.showCropGuide || boxAr == null) return preview;
     return LayoutBuilder(builder: (context, cons) {
       // Displayed preview aspect (width/height) as CameraPreview lays it out.
@@ -583,7 +852,11 @@ class _BoothScreenState extends State<BoothScreen> {
   Widget _stageView() {
     switch (stage) {
       case _Stage.welcome:
-        return WelcomeView(s: e.welcome, onStart: _onStart, camera: _camReady ? _preview(guide: false) : null);
+        if (e.capture.roaming) return _roamView();
+        return Stack(fit: StackFit.expand, children: [
+          WelcomeView(s: e.welcome, onStart: _onStart, camera: _camReady ? _preview(guide: false) : null),
+          if (_pendingPair != null) _pendingChip(),
+        ]);
       case _Stage.choose:
         return _chooser();
       case _Stage.countdown:
@@ -617,7 +890,7 @@ class _BoothScreenState extends State<BoothScreen> {
                 ),
               ),
             ),
-          if (e.capture.allowRetake)
+          if (e.capture.allowRetake || e.capture.roaming)
             _bar([
               _btn('RETAKE', Colors.white24, () {
                 if (_reviewChoice?.isCompleted == false) _reviewChoice!.complete(false);

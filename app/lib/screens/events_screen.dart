@@ -9,7 +9,7 @@ class EventsScreen extends StatelessWidget {
 
   Future<void> _create(BuildContext context) async {
     final nameCtl = TextEditingController(text: 'New Event');
-    var preset = 'magnets';
+    var preset = 'magnets2';
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -26,6 +26,7 @@ class EventsScreen extends StatelessWidget {
                 groupValue: preset,
                 onChanged: (v) => setS(() => preset = v!),
                 child: const Column(children: [
+                  RadioListTile(value: 'magnets2', title: Text('Magnets 2x (2.5x3.5 in) on 6x4')),
                   RadioListTile(value: 'magnets', title: Text('6 fridge magnets (2x2) on 4x6')),
                   RadioListTile(value: 'single', title: Text('Single photo 4x6')),
                   RadioListTile(value: 'strip', title: Text('Photo strip 2x6 (3 shots)')),
@@ -46,7 +47,8 @@ class EventsScreen extends StatelessWidget {
       'single' => PhotoLayout.singlePhoto(),
       'strip' => PhotoLayout.strip3(),
       'blank' => PhotoLayout(paper: PaperSize.presets.first),
-      _ => PhotoLayout.sixMagnets(),
+      'magnets' => PhotoLayout.sixMagnets(),
+      _ => PhotoLayout.twoMagnets(),
     };
     final e = await EventStore.instance.create(nameCtl.text.trim().isEmpty ? 'New Event' : nameCtl.text.trim(), layout);
     if (context.mounted) {
