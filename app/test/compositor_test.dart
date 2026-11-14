@@ -68,4 +68,12 @@ void main() {
     expect(cs.autoAccept, false);
     expect(CaptureSettings.fromJson({}).autoAccept, true);
   });
+
+  test('print settings: Windows usePrinterSettings round trip, default off', () {
+    final ps = PrintSettings(usePrinterSettings: true, printerName: 'EPSON L8050 Series', printerUrl: 'EPSON L8050 Series');
+    final back = PrintSettings.fromJson(ps.toJson());
+    expect(back.usePrinterSettings, true);
+    expect(back.printerName, 'EPSON L8050 Series');
+    expect(PrintSettings.fromJson({}).usePrinterSettings, false);
+  });
 }

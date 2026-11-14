@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../compositor.dart';
@@ -98,13 +100,36 @@ class _PrintSetupScreenState extends State<PrintSetupScreen> {
         if (PrintService.supportsDirectPrint)
           ListTile(
             title: const Text('Printer'),
-            subtitle: Text(s.printerName ?? 'Not chosen — print dialog will open'),
-            trailing: OutlinedButton(onPressed: _pick, child: const Text('Choose')),
+            subtitle: Text(s.printerName ??
+                (Platform.isWindows
+                    ? 'Not chosen — Windows default printer is used (no dialog)'
+                    : 'Not chosen — print dialog will open')),
+            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+              if (s.printerName != null)
+                IconButton(
+                  tooltip: 'Clear',
+                  onPressed: () => setState(() {
+                    s.printerUrl = null;
+                    s.printerName = null;
+                  }),
+                  icon: const Icon(Icons.close),
+                ),
+              OutlinedButton(onPressed: _pick, child: const Text('Choose')),
+            ]),
           )
         else
           const ListTile(
             title: Text('Printer'),
             subtitle: Text('Android: install "Epson Print Enabler" / Mopria from Play Store, then pick Epson L8050 in the print screen.'),
+          ),
+        if (Platform.isWindows)
+          SwitchListTile(
+            title: const Text("Use the printer's own settings (borderless)"),
+            subtitle: const Text('ON: Epson driver defaults are used. First set them once: Windows Settings → Printers → '
+                'Epson L8050 → Printing preferences → Paper size 4x6 / 10x15 cm, Borderless ON, Orientation LANDSCAPE, '
+                'Photo paper. OFF: app sends 6x4 landscape size itself (may print with a small white border).'),
+            value: s.usePrinterSettings,
+            onChanged: (v) => setState(() => s.usePrinterSettings = v),
           ),
         SwitchListTile(
           title: const Text('Cut marks'),

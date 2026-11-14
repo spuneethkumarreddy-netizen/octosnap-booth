@@ -45,11 +45,27 @@ class PrintService {
     final ps = event.print;
     final format = PdfPageFormat(event.layout.paper.w * PdfPageFormat.inch,
         event.layout.paper.h * PdfPageFormat.inch, marginAll: 0);
+    Printer? printer;
     if (supportsDirectPrint && ps.printerUrl != null) {
-      final printer = Printer(url: ps.printerUrl!, name: ps.printerName);
+      printer = Printer(url: ps.printerUrl!, name: ps.printerName);
+    } else if (Platform.isWindows) {
+      // No printer chosen yet: print silently to the Windows default printer (no dialog in roaming).
+      try {
+        final all = await Printing.listPrinters();
+        printer = all.where((p) => p.isDefault).firstOrNull;
+      } catch (_) {}
+    }
+    if (printer != null) {
       var ok = true;
       for (var i = 0; i < ps.copies; i++) {
-        ok = await Printing.directPrintPdf(printer: printer, onLayout: (_) async => pdf, format: format) && ok;
+        ok = await Printing.directPrintPdf(
+              printer: printer,
+              onLayout: (_) async => pdf,
+              format: format,
+              name: 'OctoSnap ${event.name}',
+              usePrinterSettings: Platform.isWindows && ps.usePrinterSettings,
+            ) &&
+            ok;
       }
       return ok;
     }

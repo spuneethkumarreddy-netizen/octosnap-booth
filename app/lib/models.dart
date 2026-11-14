@@ -382,6 +382,7 @@ class PrintSettings {
   double offsetXmm; // printer calibration: + moves the print right
   double offsetYmm; // printer calibration: + moves the print down
   double scalePct; // printer calibration: 100 = exact size
+  bool usePrinterSettings; // Windows: use the printer driver's own defaults (paper / borderless)
   PrintSettings({
     this.autoPrint = false,
     this.copies = 1,
@@ -392,8 +393,10 @@ class PrintSettings {
     this.offsetXmm = 0,
     this.offsetYmm = 0,
     this.scalePct = 100,
+    this.usePrinterSettings = false,
   });
   Map<String, dynamic> toJson() => {
+        'usePrinterSettings': usePrinterSettings,
         'autoPrint': autoPrint,
         'copies': copies,
         'printerUrl': printerUrl,
@@ -409,6 +412,7 @@ class PrintSettings {
         copies: j['copies'] as int? ?? 1,
         printerUrl: j['printerUrl'] as String?,
         printerName: j['printerName'] as String?,
+        usePrinterSettings: j['usePrinterSettings'] as bool? ?? false,
         twoPerPage: j['twoPerPage'] as bool? ?? false,
         cutMarks: j['cutMarks'] as bool? ?? false,
         offsetXmm: (j['offsetXmm'] as num? ?? 0).toDouble(),

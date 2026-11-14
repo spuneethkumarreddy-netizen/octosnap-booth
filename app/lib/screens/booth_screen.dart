@@ -8,6 +8,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../compositor.dart';
 import '../dslr.dart';
+import '../kiosk.dart';
 import '../models.dart';
 import '../print_service.dart';
 import '../storage.dart';
@@ -88,14 +89,24 @@ class _BoothScreenState extends State<BoothScreen> {
     WakelockPlus.enable().catchError((_) {});
     _initCamera();
     HardwareKeyboard.instance.addHandler(_onKey);
-    WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _toast('Operator menu (edit / exit): press Back, or hold the top-left corner for 2 seconds'));
+    if (Kiosk.supported) Kiosk.setFullScreen(true); // Windows kiosk: F11 toggles, Esc = operator menu
+    WidgetsBinding.instance.addPostFrameCallback((_) => _toast(Kiosk.supported
+        ? 'Operator menu: press Esc, or hold the top-left corner for 2 seconds. F11 = full screen on/off'
+        : 'Operator menu (edit / exit): press Back, or hold the top-left corner for 2 seconds'));
   }
 
   /// Bluetooth/USB clicker, keyboard or volume key = shutter.
   bool _onKey(KeyEvent ev) {
     if (ev is! KeyDownEvent || !_live) return false;
     if (!(ModalRoute.of(context)?.isCurrent ?? false)) return false; // a dialog / editor is open
+    if (ev.logicalKey == LogicalKeyboardKey.f11 && Kiosk.supported) {
+      Kiosk.toggle();
+      return true;
+    }
+    if (ev.logicalKey == LogicalKeyboardKey.escape && Kiosk.supported) {
+      _confirmExit();
+      return true;
+    }
     if (!_triggerKeys.contains(ev.logicalKey)) return false;
     _trigger();
     return true;
@@ -250,6 +261,7 @@ class _BoothScreenState extends State<BoothScreen> {
     _idleTimer?.cancel();
     ctl?.dispose();
     if (_dslr) Dslr.close();
+    if (Kiosk.supported) Kiosk.setFullScreen(false);
     WakelockPlus.disable().catchError((_) {});
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
@@ -635,6 +647,9 @@ class _BoothScreenState extends State<BoothScreen> {
             item(Icons.timer, 'Capture settings', 'capture'),
             if (_pendingPair != null) item(Icons.print_outlined, 'Print waiting single now (pair mode)', 'single'),
             item(Icons.print, 'Print setup', 'print'),
+            if (e.camera.source == CameraSource.usbDslr && Dslr.supported && !_dslr)
+              item(Icons.usb, 'Reconnect Canon camera', 'reconnect'),
+            if (Kiosk.supported) item(Icons.fullscreen, 'Full screen on / off (F11)', 'fullscreen'),
             item(Icons.logout, 'Exit booth', 'exit'),
           ]),
         );
@@ -654,8 +669,21 @@ class _BoothScreenState extends State<BoothScreen> {
       case 'single':
         await _forcePrintPending();
         return;
+      case 'fullscreen':
+        await Kiosk.toggle();
+        return;
+      case 'reconnect':
+        final old = ctl;
+        setState(() {
+          ctl = null;
+          cameraError = null;
+        });
+        await old?.dispose();
+        await _initCamera();
+        return;
       case 'exit':
         _session++;
+        if (Kiosk.supported) Kiosk.setFullScreen(false);
         Navigator.pop(context);
         return;
     }

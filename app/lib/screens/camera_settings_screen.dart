@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
+import '../canon_helper.dart';
 import '../dslr.dart';
 import '../models.dart';
 
@@ -26,10 +29,10 @@ class _CameraSettingsScreenState extends State<CameraSettingsScreen> {
 
   Future<void> _testDslr() async {
     if (!Dslr.supported) {
-      setState(() => _dslrStatus = 'Windows DSLR support coming next');
+      setState(() => _dslrStatus = 'DSLR not supported on this device');
       return;
     }
-    setState(() => _dslrStatus = 'Searching…');
+    setState(() => _dslrStatus = Platform.isWindows ? 'Starting camera helper…' : 'Searching…');
     try {
       final name = await Dslr.connect();
       if (mounted) setState(() => _dslrStatus = '✓ $name connected. Checking live view…');
@@ -48,6 +51,11 @@ class _CameraSettingsScreenState extends State<CameraSettingsScreen> {
         live = 'live view error: ${e is PlatformException ? e.message : e}';
       }
       await Dslr.close();
+      if (Platform.isWindows && live == 'live view OK') {
+        final d = await CanonHelper.instance.describe();
+        if (mounted) setState(() => _dslrStatus = '$d · live view OK');
+        return;
+      }
       if (mounted) setState(() => _dslrStatus = '✓ $name connected, $live');
     } catch (err) {
       final msg = err is PlatformException ? err.message : '$err';
@@ -130,12 +138,14 @@ class _CameraSettingsScreenState extends State<CameraSettingsScreen> {
         RadioGroup<CameraSource>(
           groupValue: s.source,
           onChanged: (v) => setState(() => s.source = v!),
-          child: const Column(children: [
-            RadioListTile(value: CameraSource.builtIn, title: Text('Built-in / webcam')),
+          child: Column(children: [
+            const RadioListTile(value: CameraSource.builtIn, title: Text('Built-in / webcam')),
             RadioListTile(
               value: CameraSource.usbDslr,
-              title: Text('USB DSLR (Canon EOS R10 via USB-C)'),
-              subtitle: Text('Android: USB-C cable / OTG. If not found, booth uses the built-in camera.'),
+              title: Text(Platform.isWindows ? 'Canon R10 (USB, EDSDK)' : 'USB DSLR (Canon EOS R10 via USB-C)'),
+              subtitle: Text(Platform.isWindows
+                  ? 'Windows: R10 USB-C cable to the PC, uses OctoSnapCamera.exe (Canon EDSDK). If not found, booth uses the webcam.'
+                  : 'Android: USB-C cable / OTG. If not found, booth uses the built-in camera.'),
             ),
           ]),
         ),
@@ -149,10 +159,14 @@ class _CameraSettingsScreenState extends State<CameraSettingsScreen> {
                 label: Text(_dslrStatus ?? 'Test DSLR connection'),
               ),
               const SizedBox(height: 6),
-              const Text(
-                'Camera lo: Image quality = JPEG (L), Auto power off = Disable, Wi-Fi off. '
-                'Camera ON chesi cable connect cheyyandi, permission adigithe Allow nokkandi.',
-                style: TextStyle(color: Colors.white60, fontSize: 12),
+              Text(
+                Platform.isWindows
+                    ? 'Camera lo: Image quality = JPEG (L), Auto power off = Disable, Wi-Fi off. '
+                        'EOS Utility / EOS Webcam Utility / digiCamControl close cheyyandi (okka app maatrame camera vaadagaladu). '
+                        'Camera shutter button nokkina photo kuda booth ki vastundi.'
+                    : 'Camera lo: Image quality = JPEG (L), Auto power off = Disable, Wi-Fi off. '
+                        'Camera ON chesi cable connect cheyyandi, permission adigithe Allow nokkandi.',
+                style: const TextStyle(color: Colors.white60, fontSize: 12),
               ),
             ]),
           ),

@@ -1,5 +1,10 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
+import 'canon_helper.dart';
+import 'kiosk.dart';
 import 'models.dart';
 import 'screens/events_screen.dart';
 import 'storage.dart';
@@ -7,6 +12,9 @@ import 'storage.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EventStore.instance.load();
+  await Kiosk.init();
+  // Windows: start the Canon EDSDK helper (OctoSnapCamera.exe next to the app) in the background.
+  if (Platform.isWindows) unawaited(CanonHelper.instance.ensureRunning());
   runApp(const OctoSnapBoothApp());
 }
 
